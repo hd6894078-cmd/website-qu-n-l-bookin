@@ -1,41 +1,17 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chi tiết sách - Bookin</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chi tiết sách - Bookin</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-  <header class="header">
-    <div class="container nav">
-      <a href="index.html" class="logo-link">
-        <img src="assets/logo-bookin.png" alt="Bookin" class="logo">
-      </a>
-      <button class="menu-toggle" id="menuToggle">☰</button>
-      <nav id="mainMenu">
-        <a href="index.html">Trang chủ</a>
-        <a href="books.html" class="active">Danh sách sách</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="container detail-page">
-    <a href="books.html" class="back-link">← Quay lại danh sách</a>
-    <div id="bookDetail"></div>
-  </main>
-
-  <footer class="footer">
-    <div class="container footer-inner">
-      <div>
-        <h3>Bookin</h3>
-        <p>Thư viện nhỏ dành cho những người yêu sách.</p>
-      </div>
-      <p>© 2026 Bookin Library</p>
-    </div>
-  </footer>
-
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+<div id="site-header"></div>
+<main class="page-main"><div id="bookDetail"></div></main>
+<div id="site-footer"></div>
+<script src="script.js"></script>
+<script>initBookDetail();</script>
 </body>
 </html>

@@ -1,74 +1,67 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bookin - Thư viện sách</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bookin - Thư viện hiện đại</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-  <header class="header">
-    <div class="container nav">
-      <a href="index.html" class="logo-link">
-        <img src="assets/logo-bookin.png" alt="Bookin" class="logo">
-      </a>
-      <button class="menu-toggle" id="menuToggle">☰</button>
-      <nav id="mainMenu">
-        <a href="index.html" class="active">Trang chủ</a>
-        <a href="books.html">Danh sách sách</a>
-      </nav>
+<div id="site-header"></div>
+
+<main>
+<section class="hero">
+    <div class="hero-content">
+        <span class="hero-label"><i class="fa-solid fa-sparkles"></i> CHÀO MỪNG ĐẾN VỚI BOOKIN</span>
+        <h1>Khám phá thế giới<br><span>qua từng trang sách.</span></h1>
+        <p>Tìm kiếm những cuốn sách bạn yêu thích, khám phá tri thức mới và tạo nên hành trình đọc sách của riêng bạn.</p>
+        <div class="hero-buttons">
+            <a href="books.html" class="primary-btn">Khám phá sách <i class="fa-solid fa-arrow-right"></i></a>
+            <a href="#about" class="secondary-btn">Về Bookin</a>
+        </div>
+        <div class="stats">
+            <div class="stat"><strong>1,200+</strong><span>Đầu sách</span></div>
+            <div class="stat"><strong>500+</strong><span>Độc giả</span></div>
+            <div class="stat"><strong>30+</strong><span>Thể loại</span></div>
+        </div>
     </div>
-  </header>
-
-  <main>
-    <section class="hero">
-      <div class="container hero-content">
-        <div>
-          <span class="eyebrow">BOOKIN LIBRARY</span>
-          <h1>Mỗi trang sách<br><span>một hành trình.</span></h1>
-          <p>Khám phá những cuốn sách hay, tìm đúng thể loại bạn yêu thích và bắt đầu một hành trình đọc mới.</p>
-          <a href="books.html" class="btn">Khám phá sách →</a>
-        </div>
-        <div class="hero-book">
-          <div class="book-shape">📖</div>
-          <p>Đọc mỗi ngày<br>thêm một điều hay.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="container section">
-      <div class="section-title">
-        <div>
-          <span class="eyebrow">BOOK COLLECTION</span>
-          <h2>Sách nổi bật</h2>
-        </div>
-        <a href="books.html" class="view-all">Xem tất cả →</a>
-      </div>
-      <div id="featuredBooks" class="book-grid"></div>
-    </section>
-
-    <section class="quote-section">
-      <div class="container quote">
-        <span>“</span>
-        <p>Một cuốn sách hay có thể thay đổi cách bạn nhìn thế giới.</p>
-      </div>
-    </section>
-  </main>
-
-  <footer class="footer">
-    <div class="container footer-inner">
-      <div>
-        <h3>Bookin</h3>
-        <p>Thư viện nhỏ dành cho những người yêu sách.</p>
-      </div>
-      <div>
-        <p>© 2026 Bookin Library</p>
-        <p>Đọc sách · Khám phá · Phát triển</p>
-      </div>
+    <div class="hero-image">
+        <div class="image-card"><img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=900&q=80" alt="Thư viện Bookin"></div>
+        <div class="floating-card card-one"><div class="floating-icon"><i class="fa-solid fa-book"></i></div><div><strong>1,200+</strong><span>Cuốn sách</span></div></div>
+        <div class="floating-card card-two"><i class="fa-solid fa-star"></i><div><strong>4.9/5</strong><span>Đánh giá</span></div></div>
     </div>
-  </footer>
+</section>
 
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+<section class="features" id="about">
+    <div class="section-heading"><span>BOOKIN FEATURES</span><h2>Mọi thứ bạn cần<br>cho hành trình đọc sách</h2></div>
+    <div class="feature-grid">
+        <div class="feature-card"><div class="feature-icon orange"><i class="fa-solid fa-book"></i></div><h3>Kho sách phong phú</h3><p>Khám phá hàng nghìn đầu sách thuộc nhiều thể loại khác nhau.</p><a href="books.html">Xem kho sách <i class="fa-solid fa-arrow-right"></i></a></div>
+        <div class="feature-card"><div class="feature-icon green"><i class="fa-solid fa-magnifying-glass"></i></div><h3>Tìm kiếm dễ dàng</h3><p>Tìm sách nhanh chóng theo tên, tác giả hoặc thể loại.</p><a href="books.html">Tìm sách <i class="fa-solid fa-arrow-right"></i></a></div>
+        <div class="feature-card"><div class="feature-icon purple"><i class="fa-solid fa-heart"></i></div><h3>Sách yêu thích</h3><p>Lưu lại những cuốn sách yêu thích để đọc lại bất cứ lúc nào.</p><a href="books.html">Khám phá <i class="fa-solid fa-arrow-right"></i></a></div>
+        <div class="feature-card"><div class="feature-icon blue"><i class="fa-solid fa-book-open"></i></div><h3>Quản lý mượn sách</h3><p>Theo dõi trạng thái sách và thông tin mượn trả trực quan.</p><a href="books.html">Xem thêm <i class="fa-solid fa-arrow-right"></i></a></div>
+    </div>
+</section>
+
+<section class="books-section" id="books">
+    <div class="section-top"><div><span>SÁCH NỔI BẬT</span><h2>Được độc giả yêu thích</h2></div><a href="books.html" class="view-all">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a></div>
+    <div class="book-grid" id="featuredBooks"></div>
+</section>
+
+<section class="category-section" id="category">
+    <div class="category-content"><span>KHÁM PHÁ</span><h2>Tìm thể loại phù hợp với bạn</h2><p>Mỗi cuốn sách là một hành trình. Hãy chọn nơi bạn muốn bắt đầu.</p></div>
+    <div class="category-list">
+        <a href="books.html?category=Văn học"><i class="fa-solid fa-feather"></i><span>Văn học</span><small>245 sách</small></a>
+        <a href="books.html?category=Kinh tế"><i class="fa-solid fa-chart-line"></i><span>Kinh tế</span><small>180 sách</small></a>
+        <a href="books.html?category=Công nghệ"><i class="fa-solid fa-code"></i><span>Công nghệ</span><small>156 sách</small></a>
+        <a href="books.html?category=Kỹ năng sống"><i class="fa-solid fa-lightbulb"></i><span>Kỹ năng sống</span><small>210 sách</small></a>
+    </div>
+</section>
+
+<section class="quote-section"><div class="quote-box"><i class="fa-solid fa-quote-left"></i><h2>“Một căn phòng không có sách giống như một cơ thể không có linh hồn.”</h2><p>— Marcus Tullius Cicero</p><a href="books.html" class="primary-btn">Bắt đầu khám phá <i class="fa-solid fa-arrow-right"></i></a></div></section>
+</main>
+<div id="site-footer"></div>
+<script src="script.js"></script>
+<script>renderFeaturedBooks();</script>
 </body>
 </html>

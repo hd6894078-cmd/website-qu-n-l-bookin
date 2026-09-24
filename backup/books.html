@@ -1,62 +1,29 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Danh sách sách - Bookin</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kho sách - Bookin</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
-  <header class="header">
-    <div class="container nav">
-      <a href="index.html" class="logo-link">
-        <img src="assets/logo-bookin.png" alt="Bookin" class="logo">
-      </a>
-      <button class="menu-toggle" id="menuToggle">☰</button>
-      <nav id="mainMenu">
-        <a href="index.html">Trang chủ</a>
-        <a href="books.html" class="active">Danh sách sách</a>
-      </nav>
-    </div>
-  </header>
+<div id="site-header"></div>
+<main class="page-main">
+<section class="page-title"><span>KHO SÁCH BOOKIN</span><h1>Danh sách sách</h1><p>Tìm kiếm và lọc sách theo nhu cầu của bạn.</p></section>
 
-  <main class="container books-page">
-    <div class="page-heading">
-      <span class="eyebrow">BOOK COLLECTION</span>
-      <h1>Danh sách sách</h1>
-      <p>Tìm kiếm và lọc những cuốn sách phù hợp với bạn.</p>
-    </div>
+<section class="library-tools">
+    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Tìm theo tên sách, tác giả..."></div>
+    <select id="categoryFilter"><option value="">Tất cả thể loại</option></select>
+    <select id="statusFilter"><option value="">Tất cả trạng thái</option><option value="available">Còn sách</option><option value="borrowed">Đang mượn</option></select>
+</section>
 
-    <div class="filters">
-      <div class="search-box">
-        <span>⌕</span>
-        <input type="text" id="searchInput" placeholder="Tìm theo tên sách hoặc tác giả...">
-      </div>
-      <select id="categoryFilter">
-        <option value="all">Tất cả thể loại</option>
-      </select>
-    </div>
-
-    <div id="bookCount" class="book-count"></div>
-    <div id="bookList" class="book-grid"></div>
-    <div id="emptyState" class="empty-state hidden">
-      <div class="empty-icon">📚</div>
-      <h2>Không tìm thấy sách</h2>
-      <p>Hãy thử từ khóa hoặc thể loại khác nhé.</p>
-    </div>
-  </main>
-
-  <footer class="footer">
-    <div class="container footer-inner">
-      <div>
-        <h3>Bookin</h3>
-        <p>Thư viện nhỏ dành cho những người yêu sách.</p>
-      </div>
-      <p>© 2026 Bookin Library</p>
-    </div>
-  </footer>
-
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+<div class="result-bar"><span id="resultCount"></span><button id="clearFilters" class="clear-btn">Xóa bộ lọc</button></div>
+<section id="bookList" class="book-grid full-grid"></section>
+<div id="emptyState" class="empty-state hidden"><i class="fa-solid fa-book-open"></i><h2>Không tìm thấy sách</h2><p>Hãy thử từ khóa hoặc thể loại khác.</p></div>
+</main>
+<div id="site-footer"></div>
+<script src="script.js"></script>
+<script>initLibraryPage();</script>
 </body>
 </html>

@@ -47,11 +47,13 @@ return `<article class="book-card"><a href="book-detail.html?id=${b.id}"><div cl
 }
 function renderFeaturedBooks(){const el=document.getElementById("featuredBooks");if(el)el.innerHTML=books.slice(0,4).map(card).join("")}
 function initLibraryPage(){
-const list=document.getElementById("bookList"), search=document.getElementById("searchInput"), cat=document.getElementById("categoryFilter"), stat=document.getElementById("statusFilter"), rating=document.getElementById("ratingFilter"), year=document.getElementById("yearFilter"), count=document.getElementById("resultCount"), empty=document.getElementById("emptyState"), clearBtn=document.getElementById("clearFilters"), suggestionWrap=document.getElementById("searchSuggestions");
+const list=document.getElementById("bookList"), search=document.getElementById("searchInput"), cat=document.getElementById("categoryFilter"), stat=document.getElementById("statusFilter"), rating=document.getElementById("ratingFilter"), year=document.getElementById("yearFilter"), count=document.getElementById("resultCount"), empty=document.getElementById("emptyState"), clearBtn=document.getElementById("clearFilters"), suggestionWrap=document.getElementById("searchSuggestions"), categoryChips=document.getElementById("categoryChips");
 if(!list || !search || !cat || !stat || !rating || !year || !count || !empty) return;
 const suggestionTitles=["Đắc Nhân Tâm","Clean Code","Atomic Habits","Sapiens","Homo Deus","Cà Phê Cùng Tony","Đọc theo tâm trạng","Kỹ năng sống","Công nghệ","Văn học"];
 if(suggestionWrap){suggestionWrap.innerHTML=suggestionTitles.map(title=>`<button type="button" class="suggestion-tag" data-keyword="${title}">${title}</button>`).join("");suggestionWrap.querySelectorAll(".suggestion-tag").forEach(button=>button.addEventListener("click",()=>{search.value=button.dataset.keyword;render();search.focus();}));}
-[...new Set(books.map(b=>b.category))].sort().forEach(c=>cat.insertAdjacentHTML("beforeend",`<option value="${c}">${c}</option>`));
+const categories=[...new Set(books.map(b=>b.category))].sort();
+categories.forEach(c=>cat.insertAdjacentHTML("beforeend",`<option value="${c}">${c}</option>`));
+if(categoryChips){categoryChips.innerHTML=["",...categories].map(c=>`<button type="button" class="category-chip${c?"":" is-active"}" data-category="${c}">${c||"Tất cả"}</button>`).join("");categoryChips.querySelectorAll(".category-chip").forEach(button=>button.addEventListener("click",()=>{cat.value=button.dataset.category;render();}));}
 const params=new URLSearchParams(location.search); if(params.get("category"))cat.value=params.get("category"); if(params.get("search"))search.value=params.get("search");
 function render(){
  const q=normalize(search.value), c=cat.value, s=stat.value, ratingValue=Number(rating.value)||0, yearValue=Number(year.value)||0;
@@ -68,6 +70,7 @@ function render(){
  count.textContent=`Hiển thị ${result.length} / ${books.length} đầu sách`;
  empty.classList.toggle("hidden",result.length!==0);
  list.classList.toggle("hidden",result.length===0);
+ if(categoryChips)categoryChips.querySelectorAll(".category-chip").forEach(button=>button.classList.toggle("is-active",button.dataset.category===c));
 }
 [search,cat,stat,rating,year].forEach(x=>x.addEventListener("input",render));
 search.addEventListener("search",render);

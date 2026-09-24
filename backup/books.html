@@ -10,15 +10,15 @@
 <body>
 <div id="site-header"></div>
 <main class="page-main">
-<section class="page-title"><span>KHO SÁCH BOOKIN</span><h1>Danh sách sách</h1><p>Tìm kiếm và lọc sách theo nhu cầu của bạn.</p></section>
+<section class="page-title library-hero"><div><span>KHO SÁCH BOOKIN</span><h1>Một cuốn sách,<br><em>một thế giới mới.</em></h1><p>Chọn một chủ đề, tìm một cảm hứng và bắt đầu hành trình đọc của riêng bạn.</p></div><div class="library-hero-note"><i class="fa-solid fa-quote-left"></i><strong>Đọc để sống<br>thêm nhiều cuộc đời.</strong><small>— Bookin reading club</small></div></section>
 
 <section class="library-tools">
-    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Tìm theo tên sách, tác giả..."></div>
-    <select id="categoryFilter"><option value="">Tất cả thể loại</option></select>
-    <select id="statusFilter"><option value="">Tất cả trạng thái</option><option value="available">Còn sách</option><option value="borrowed">Đang mượn</option></select>
+    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Bạn đang tìm câu chuyện nào?" aria-label="Tìm kiếm sách"></div>
+    <label class="filter-field"><span>Chủ đề</span><select id="categoryFilter"><option value="">Tất cả thể loại</option></select></label>
+    <label class="filter-field"><span>Tình trạng</span><select id="statusFilter"><option value="">Tất cả trạng thái</option><option value="available">Còn sách</option><option value="borrowed">Đang mượn</option></select></label>
 </section>
 
-<div class="result-bar"><span id="resultCount"></span><button id="clearFilters" class="clear-btn">Xóa bộ lọc</button></div>
+<div class="result-bar"><span id="resultCount"></span><button id="clearFilters" class="clear-btn"><i class="fa-solid fa-rotate-left"></i> Đặt lại</button></div>
 <section id="bookList" class="book-grid full-grid"></section>
 <div id="emptyState" class="empty-state hidden"><i class="fa-solid fa-book-open"></i><h2>Không tìm thấy sách</h2><p>Hãy thử từ khóa hoặc thể loại khác.</p></div>
 </main>

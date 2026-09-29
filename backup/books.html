@@ -10,20 +10,25 @@
 <body>
 <div id="site-header"></div>
 <main class="page-main">
-<section class="page-title"><span>KHO SÁCH BOOKIN</span><h1>Danh sách sách</h1><p>Tìm kiếm và lọc sách theo nhu cầu của bạn.</p></section>
+<section class="page-title library-hero"><div><span>KHO SÁCH BOOKIN</span><h1>Một cuốn sách,<br><em>một thế giới mới.</em></h1><p>Chọn một chủ đề, tìm một cảm hứng và bắt đầu hành trình đọc của riêng bạn.</p></div><div class="library-hero-note"><i class="fa-solid fa-quote-left"></i><strong>Đọc để sống<br>thêm nhiều cuộc đời.</strong><small>— Bookin reading club</small></div></section>
 
 <section class="library-tools">
-    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Tìm theo tên sách, tác giả..."></div>
-    <select id="categoryFilter"><option value="">Tất cả thể loại</option></select>
-    <select id="statusFilter"><option value="">Tất cả trạng thái</option><option value="available">Còn sách</option><option value="borrowed">Đang mượn</option></select>
+    <div class="search-box"><i class="fa-solid fa-magnifying-glass"></i><input id="searchInput" type="search" placeholder="Bạn đang tìm câu chuyện nào?" aria-label="Tìm kiếm sách"></div>
+    <label class="filter-field"><span>Chủ đề</span><select id="categoryFilter"><option value="">Tất cả thể loại</option></select></label>
+    <label class="filter-field"><span>Tình trạng</span><select id="statusFilter"><option value="">Tất cả trạng thái</option><option value="available">Còn sách</option><option value="borrowed">Đang mượn</option></select></label>
+    <label class="filter-field"><span>Đánh giá</span><select id="ratingFilter"><option value="">Tất cả</option><option value="4.5">4.5+</option><option value="4.7">4.7+</option><option value="4.8">4.8+</option></select></label>
+    <label class="filter-field"><span>Năm xuất bản</span><select id="yearFilter"><option value="">Mọi năm</option><option value="2000">Từ 2000</option><option value="2010">Từ 2010</option><option value="2020">Từ 2020</option></select></label>
 </section>
+<div id="categoryChips" class="category-chips" aria-label="Lọc nhanh theo thể loại"></div>
+<div id="searchSuggestions" class="search-suggestions" aria-label="Gợi ý tìm kiếm"></div>
 
-<div class="result-bar"><span id="resultCount"></span><button id="clearFilters" class="clear-btn">Xóa bộ lọc</button></div>
+<div class="result-bar"><span id="resultCount"></span><button id="clearFilters" class="clear-btn"><i class="fa-solid fa-rotate-left"></i> Đặt lại</button></div>
 <section id="bookList" class="book-grid full-grid"></section>
 <div id="emptyState" class="empty-state hidden"><i class="fa-solid fa-book-open"></i><h2>Không tìm thấy sách</h2><p>Hãy thử từ khóa hoặc thể loại khác.</p></div>
+<section class="reading-paths"><div class="reading-paths-heading"><span>ĐỌC THEO TÂM TRẠNG</span><h2>Hôm nay bạn muốn<br><em>đi đâu qua trang sách?</em></h2><p>Một lựa chọn nhỏ có thể mở ra một hành trình rất khác.</p></div><div class="reading-path-grid"><a href="books.html?category=Văn học" class="reading-path path-literature"><i class="fa-solid fa-feather-pointed"></i><strong>Đắm mình vào câu chuyện</strong><small>Văn học & cảm hứng</small><span>Xem tuyển chọn <i class="fa-solid fa-arrow-right"></i></span></a><a href="books.html?category=Kỹ năng sống" class="reading-path path-growth"><i class="fa-solid fa-seedling"></i><strong>Nuôi dưỡng phiên bản tốt hơn</strong><small>Kỹ năng sống & thói quen</small><span>Bắt đầu ngay <i class="fa-solid fa-arrow-right"></i></span></a><a href="books.html?category=Công nghệ" class="reading-path path-tech"><i class="fa-solid fa-lightbulb"></i><strong>Mở rộng cách nghĩ</strong><small>Công nghệ & thế giới mới</small><span>Khám phá chủ đề <i class="fa-solid fa-arrow-right"></i></span></a></div></section>
+<section class="library-cta"><div><span>MỖI NGÀY MỘT TRANG SÁCH</span><h2>Để Bookin đồng hành<br>cùng thói quen đọc của bạn.</h2></div><a href="index.html#about" class="primary-btn">Về Bookin <i class="fa-solid fa-arrow-right"></i></a></section>
 </main>
 <div id="site-footer"></div>
 <script src="script.js"></script>
-<script>initLibraryPage();</script>
 </body>
 </html>

@@ -204,12 +204,14 @@ if(migrated)writeLocalList("bookin-borrow-requests",scopedRequests);
 return scopedRequests.filter(request=>request.userId===userId);
 }
 function currentUserBookRequest(bookId){
-return currentUserBorrowRequests().find(request=>Number(request.id)===Number(bookId)&&["borrow","waitlist","active"].includes(request.type))||null;
+return currentUserBorrowRequests().filter(request=>Number(request.id)===Number(bookId)&&["borrow","waitlist","active","returned","cancelled"].includes(request.type)).slice(-1)[0]||null;
 }
 function borrowRequestPresentation(request){
 if(!request)return null;
 if(request.type==="active")return {label:"Đang mượn",icon:"fa-book-open",className:"active"};
 if(request.type==="waitlist")return {label:"Đang chờ sách",icon:"fa-clock",className:"waitlist"};
+if(request.type==="returned")return {label:"Đã trả",icon:"fa-check",className:"returned"};
+if(request.type==="cancelled")return {label:"Đã hủy",icon:"fa-xmark",className:"cancelled"};
 return {label:"Chờ xác nhận",icon:"fa-hourglass-half",className:"pending"};
 }
 function initProfilePage(){
@@ -396,7 +398,7 @@ const bookId=Number(new URLSearchParams(location.search).get("id")),request=curr
 if(!presentation)return;
 const stockStatus=detail.querySelector(".detail-info .status"),action=detail.querySelector(".detail-actions .primary-btn");
 if(stockStatus){const badge=document.createElement("span");badge.className=`user-request-status ${presentation.className}`;badge.innerHTML=`<i class="fa-solid ${presentation.icon}" aria-hidden="true"></i> ${presentation.label}`;stockStatus.insertAdjacentElement("afterend",badge);}
-if(action){action.href="borrowed.html";action.removeAttribute("onclick");action.innerHTML=`${presentation.label} <i class="fa-solid fa-arrow-right"></i>`;}
+if(action&&["borrow","waitlist","active"].includes(request.type)){action.href="borrowed.html";action.removeAttribute("onclick");action.innerHTML=`${presentation.label} <i class="fa-solid fa-arrow-right"></i>`;}
 }
 document.addEventListener("DOMContentLoaded",updateBookBorrowStatus);
 function borrowBook(id){

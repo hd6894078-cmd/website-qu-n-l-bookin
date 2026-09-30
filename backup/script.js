@@ -146,6 +146,8 @@ function initLoginForm(){
 const form=document.getElementById("loginForm");
 if(!form)return;
 const emailInput=document.getElementById("loginEmail"),password=document.getElementById("loginPassword"),message=document.getElementById("loginMessage"),remember=document.querySelector('#loginForm input[name="remember"]');
+const submitButton=form.querySelector('button[type="submit"]');
+let loginInProgress=false;
 emailInput.value=localStorage.getItem("bookin-remembered-email")||"";
 document.querySelector("[data-login-password-toggle]")?.addEventListener("click",event=>{
 const button=event.currentTarget,visible=password.type==="password";
@@ -155,12 +157,14 @@ button.innerHTML=visible?'<i class="fa-regular fa-eye-slash" aria-hidden="true">
 });
 form.addEventListener("submit",async event=>{
 event.preventDefault();
+if(loginInProgress)return;
 if(!form.reportValidity())return;
 const email=normalizeEmail(emailInput.value),credential=readLocalList("bookin-user-credentials").find(item=>item.email===email),user=readLocalList("bookin-registered-users").find(item=>normalizeEmail(item.email)===email);
 if(!credential||!user||user.status!=="active"){
 message.textContent="Email hoặc mật khẩu chưa đúng. Tài khoản mẫu chưa thể đăng nhập.";
 message.classList.add("is-visible");return;
 }
+loginInProgress=true;submitButton.disabled=true;
 try{
 const passwordHash=await derivePasswordHash(password.value,credential.salt,credential.iterations||120000);
 if(passwordHash!==credential.hash){message.textContent="Email hoặc mật khẩu chưa đúng.";message.classList.add("is-visible");return;}
@@ -172,6 +176,8 @@ message.classList.add("is-visible");
 }catch{
 message.textContent="Không thể xác minh tài khoản trong trình duyệt này. Hãy mở trang bằng HTTPS hoặc localhost.";
 message.classList.add("is-visible");
+}finally{
+loginInProgress=false;submitButton.disabled=false;
 }
 });
 document.getElementById("forgotPassword")?.addEventListener("click",()=>{
@@ -188,10 +194,11 @@ function initProfilePage(){
 const form=document.getElementById("profileForm");
 if(!form)return;
 const profileKey="bookin-profile",savedKey="bookin-saved-books",requestsKey="bookin-borrow-requests";
-const nameInput=document.getElementById("profileNameInput"),emailInput=document.getElementById("profileEmailInput"),message=document.getElementById("profileMessage");
+const nameInput=document.getElementById("profileNameInput"),emailInput=document.getElementById("profileEmailInput"),message=document.getElementById("profileMessage"),logoutButton=document.getElementById("logoutButton");
 let profile={name:"",email:""};
 try{profile=JSON.parse(localStorage.getItem(profileKey)||"{}");}catch{profile={};}
 nameInput.value=profile.name||"";emailInput.value=profile.email||"";
+if(logoutButton)logoutButton.hidden=!localStorage.getItem("bookin-current-user");
 function renderProfile(){
 const name=profile.name||"Độc giả Bookin",initials=profile.name?.trim()?profile.name.trim().split(/\s+/).slice(-2).map(part=>part[0]).join("").toUpperCase():"Đ";
 document.getElementById("profileGreeting").textContent=profile.name?.trim().split(/\s+/)[0]||"độc giả";
@@ -208,6 +215,7 @@ document.getElementById("profileActivity").innerHTML=requests.length?requests.sl
 }
 form.addEventListener("submit",event=>{event.preventDefault();if(!form.reportValidity())return;profile={name:nameInput.value.trim(),email:emailInput.value.trim()};localStorage.setItem(profileKey,JSON.stringify(profile));renderProfile();message.textContent="Thông tin hồ sơ đã được lưu trên thiết bị này.";message.classList.add("is-visible");});
 document.getElementById("editProfileButton")?.addEventListener("click",()=>{nameInput.focus();document.getElementById("profileEditPanel").scrollIntoView({behavior:"smooth",block:"center"});});
+logoutButton?.addEventListener("click",()=>{localStorage.removeItem("bookin-current-user");localStorage.removeItem("bookin-profile");location.href="index.html";});
 document.addEventListener("click",event=>{const button=event.target.closest("[data-remove-book]");if(!button)return;const id=Number(button.dataset.removeBook);writeLocalList(savedKey,readLocalList(savedKey).filter(savedId=>Number(savedId)!==id));renderProfile();});
 renderProfile();
 }

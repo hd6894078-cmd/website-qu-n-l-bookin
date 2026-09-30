@@ -59,6 +59,10 @@ const label=accountButton.querySelector("span");if(label)label.textContent="Tài
 }
 document.addEventListener("DOMContentLoaded",initAccountHeader);
 function normalizeEmail(email){return email.trim().toLowerCase();}
+function emailAlreadyRegistered(email){
+const normalizedEmail=normalizeEmail(email),registeredUsers=readLocalList("bookin-registered-users"),credentials=readLocalList("bookin-user-credentials");
+return [...users,...registeredUsers].some(user=>normalizeEmail(user.email)===normalizedEmail)||credentials.some(credential=>normalizeEmail(credential.email)===normalizedEmail);
+}
 async function derivePasswordHash(password,saltHex,iterations=120000){
 if(!globalThis.crypto?.subtle)throw new Error("secure-crypto-unavailable");
 const salt=new Uint8Array(saltHex.match(/.{2}/g).map(byte=>parseInt(byte,16)));
@@ -75,12 +79,14 @@ function initRegistrationForm(){
 const form=document.getElementById("registerForm");
 if(!form)return;
 const password=document.getElementById("registerPassword"),confirmPassword=document.getElementById("registerConfirm"),emailInput=document.getElementById("registerEmail"),emailFeedback=document.getElementById("registerEmailFeedback"),meterFill=document.getElementById("passwordMeterFill"),meterText=document.getElementById("passwordMeterText"),message=document.getElementById("registerMessage");
+const submitButton=form.querySelector('button[type="submit"]');
+let submissionInProgress=false;
 function validateRegistrationEmail(){
 const email=normalizeEmail(emailInput.value);
 emailInput.setCustomValidity("");emailFeedback.textContent="";emailFeedback.className="email-feedback";
 if(!email)return false;
 if(!emailInput.validity.valid){emailFeedback.textContent="Vui lòng nhập email đúng định dạng.";emailFeedback.classList.add("is-error");return false;}
-const exists=[...users,...readLocalList("bookin-registered-users")].some(user=>normalizeEmail(user.email)===email);
+const exists=emailAlreadyRegistered(email);
 if(exists){emailInput.setCustomValidity("Email này đã được đăng ký.");emailFeedback.textContent="Email này đã được đăng ký.";emailFeedback.classList.add("is-error");return false;}
 emailFeedback.textContent="Email có thể sử dụng.";emailFeedback.classList.add("is-available");return true;
 }
@@ -103,17 +109,23 @@ button.innerHTML=visible?'<i class="fa-regular fa-eye-slash" aria-hidden="true">
 }));
 form.addEventListener("submit",async event=>{
 event.preventDefault();
+if(submissionInProgress)return;
 updatePasswordFeedback();
 validateRegistrationEmail();
 if(!form.reportValidity())return;
 const email=normalizeEmail(emailInput.value),name=document.getElementById("registerName").value.trim();
-const registeredUsers=readLocalList("bookin-registered-users"),credentials=readLocalList("bookin-user-credentials");
-if([...users,...registeredUsers].some(user=>normalizeEmail(user.email)===email)||credentials.some(credential=>credential.email===email)){
+if(emailAlreadyRegistered(email)){
 message.textContent="Email này đã được đăng ký. Hãy đăng nhập hoặc dùng email khác.";
 message.classList.add("is-visible");return;
 }
+submissionInProgress=true;submitButton.disabled=true;
 try{
-const credential=await createCredential(email,password.value),user={id:`USR-${Date.now()}`,name,email,role:"reader",status:"active",membership:"Thành viên mới",joinedAt:new Date().toISOString().slice(0,10),favoriteCategories:[],savedBookIds:[],loans:[]};
+const credential=await createCredential(email,password.value);
+if(emailAlreadyRegistered(email)){
+message.textContent="Email này vừa được đăng ký ở một phiên khác. Hãy đăng nhập hoặc dùng email khác.";
+message.classList.add("is-visible");return;
+}
+const registeredUsers=readLocalList("bookin-registered-users"),credentials=readLocalList("bookin-user-credentials"),user={id:`USR-${Date.now()}`,name,email,role:"reader",status:"active",membership:"Thành viên mới",joinedAt:new Date().toISOString().slice(0,10),favoriteCategories:[],savedBookIds:[],loans:[]};
 writeLocalList("bookin-registered-users",[...registeredUsers,user]);
 writeLocalList("bookin-user-credentials",[...credentials,credential]);
 localStorage.setItem("bookin-profile",JSON.stringify({name,email}));
@@ -124,6 +136,8 @@ form.reset();meterFill.dataset.strength="0";meterText.textContent="Độ mạnh 
 }catch{
 message.textContent="Không thể lưu tài khoản trên trình duyệt này. Hãy mở trang bằng HTTPS hoặc localhost rồi thử lại.";
 message.classList.add("is-visible");
+}finally{
+submissionInProgress=false;submitButton.disabled=false;
 }
 });
 }

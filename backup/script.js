@@ -95,6 +95,52 @@ message.classList.add("is-visible");
 });
 }
 document.addEventListener("DOMContentLoaded",initLoginForm);
+function readLocalList(key){
+try{const value=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(value)?value:[];}catch{return [];}
+}
+function writeLocalList(key,value){localStorage.setItem(key,JSON.stringify(value));}
+function initProfilePage(){
+const form=document.getElementById("profileForm");
+if(!form)return;
+const profileKey="bookin-profile",savedKey="bookin-saved-books",requestsKey="bookin-borrow-requests";
+const nameInput=document.getElementById("profileNameInput"),emailInput=document.getElementById("profileEmailInput"),message=document.getElementById("profileMessage");
+let profile={name:"",email:""};
+try{profile=JSON.parse(localStorage.getItem(profileKey)||"{}");}catch{profile={};}
+nameInput.value=profile.name||"";emailInput.value=profile.email||"";
+function renderProfile(){
+const name=profile.name||"Độc giả Bookin",initials=profile.name?.trim()?profile.name.trim().split(/\s+/).slice(-2).map(part=>part[0]).join("").toUpperCase():"Đ";
+document.getElementById("profileGreeting").textContent=profile.name?.trim().split(/\s+/)[0]||"độc giả";
+document.getElementById("profileNameDisplay").textContent=name;
+document.getElementById("profileEmailDisplay").textContent=profile.email||"Thêm email của bạn";
+document.getElementById("profileAvatar").textContent=initials;
+const savedIds=readLocalList(savedKey).map(Number),savedBooks=books.filter(book=>savedIds.includes(book.id));
+const requests=readLocalList(requestsKey);
+document.getElementById("savedBookCount").textContent=savedBooks.length;
+document.getElementById("borrowRequestCount").textContent=requests.length;
+document.getElementById("savedBooksGrid").innerHTML=savedBooks.map(book=>`<div class="profile-saved-item">${card(book)}<button type="button" class="remove-saved" data-remove-book="${book.id}" aria-label="Bỏ lưu ${book.title}"><i class="fa-solid fa-heart-crack"></i></button></div>`).join("");
+document.getElementById("savedBooksEmpty").classList.toggle("hidden",savedBooks.length>0);
+document.getElementById("profileActivity").innerHTML=requests.length?requests.slice().reverse().slice(0,4).map(request=>{const book=books.find(item=>item.id===Number(request.id));if(!book)return "";return `<article class="activity-item"><span class="activity-icon"><i class="fa-solid fa-book-open"></i></span><div><strong>${book.title}</strong><small>${request.type==="waitlist"?"Đăng ký chờ":"Yêu cầu mượn"} · ${new Date(request.date).toLocaleDateString("vi-VN")}</small></div></article>`;}).join(""):'<p class="activity-empty">Bạn chưa gửi yêu cầu mượn nào.</p>';
+}
+form.addEventListener("submit",event=>{event.preventDefault();if(!form.reportValidity())return;profile={name:nameInput.value.trim(),email:emailInput.value.trim()};localStorage.setItem(profileKey,JSON.stringify(profile));renderProfile();message.textContent="Thông tin hồ sơ đã được lưu trên thiết bị này.";message.classList.add("is-visible");});
+document.getElementById("editProfileButton")?.addEventListener("click",()=>{nameInput.focus();document.getElementById("profileEditPanel").scrollIntoView({behavior:"smooth",block:"center"});});
+document.addEventListener("click",event=>{const button=event.target.closest("[data-remove-book]");if(!button)return;const id=Number(button.dataset.removeBook);writeLocalList(savedKey,readLocalList(savedKey).filter(savedId=>Number(savedId)!==id));renderProfile();});
+renderProfile();
+}
+document.addEventListener("DOMContentLoaded",()=>{
+const headerActions=document.querySelector(".header-actions");
+headerActions?.insertAdjacentHTML("afterbegin",'<a class="profile-header-link" href="profile.html" aria-label="Trang cá nhân" title="Trang cá nhân"><i class="fa-regular fa-user"></i></a>');
+initProfilePage();
+document.querySelectorAll(".save-book").forEach(button=>{
+const id=Number(new URLSearchParams(location.search).get("id")),saved=readLocalList("bookin-saved-books").map(Number).includes(id);
+button.setAttribute("aria-pressed",String(saved));button.setAttribute("aria-label",saved?"Bỏ lưu sách":"Lưu sách");button.innerHTML=saved?'<i class="fa-solid fa-heart"></i>':'<i class="fa-regular fa-heart"></i>';
+});
+document.addEventListener("click",event=>{
+const button=event.target.closest(".save-book");if(!button)return;
+const id=Number(new URLSearchParams(location.search).get("id")),savedIds=readLocalList("bookin-saved-books").map(Number),saved=savedIds.includes(id);
+writeLocalList("bookin-saved-books",saved?savedIds.filter(savedId=>savedId!==id):[...savedIds,id]);
+button.setAttribute("aria-pressed",String(!saved));button.setAttribute("aria-label",saved?"Lưu sách":"Bỏ lưu sách");button.innerHTML=saved?'<i class="fa-regular fa-heart"></i>':'<i class="fa-solid fa-heart"></i>';
+});
+});
 function card(b){
 const status=b.status==="available"?'<span class="status available"><i class="fa-solid fa-circle-check"></i> Còn sách</span>':'<span class="status borrowed"><i class="fa-solid fa-clock"></i> Đang mượn</span>';
 return `<article class="book-card"><a href="book-detail.html?id=${b.id}"><div class="book-cover ${b.cover}"><img src="${b.image}" alt="Bìa sách ${b.title}" loading="lazy" onerror="this.style.display='none'"><span>${String(b.id).padStart(2,"0")}</span><i class="fa-solid fa-book-open"></i></div></a><div class="book-info"><span class="book-category">${b.category.toUpperCase()}</span><h3>${b.title}</h3><p>${b.author}</p><div class="book-bottom"><div class="book-meta"><span class="book-rating"><i class="fa-solid fa-star"></i> ${b.rating}</span>${status}</div><a href="book-detail.html?id=${b.id}" aria-label="Xem chi tiết"><button><i class="fa-solid fa-arrow-right"></i></button></a></div></div></article>`;
@@ -135,4 +181,4 @@ emptyReset?.addEventListener("click",resetFilters);
 render();
 }
 function initBookDetail(){const el=document.getElementById("bookDetail"),id=Number(new URLSearchParams(location.search).get("id"))||1,b=books.find(x=>x.id===id)||books[0],related=books.filter(x=>x.category===b.category&&x.id!==b.id).slice(0,3);const status=b.status==="available"?'<span class="status available"><i class="fa-solid fa-circle-check"></i> Đang có sẵn để mượn</span>':'<span class="status borrowed"><i class="fa-solid fa-clock"></i> Đang được mượn</span>';el.innerHTML=`<div class="detail-wrap"><div class="detail-cover-column"><a class="back-link" href="books.html"><i class="fa-solid fa-arrow-left"></i> Quay lại kho sách</a><div class="detail-cover ${b.cover}"><img src="${b.image}" alt="Bìa sách ${b.title}" onerror="this.style.display='none'"><span>${String(b.id).padStart(2,"0")}</span><i class="fa-solid fa-book-open"></i></div><div class="cover-caption"><i class="fa-solid fa-bookmark"></i> Một lựa chọn đáng đọc</div></div><div class="detail-info"><div class="detail-kicker"><span class="book-category">${b.category.toUpperCase()}</span><span class="detail-rating"><i class="fa-solid fa-star"></i> ${b.rating} <small>/ 5</small></span></div><h1>${b.title}</h1><p class="detail-author">Tác giả <strong>${b.author}</strong></p>${status}<p class="detail-desc">${b.description}</p><div class="detail-meta"><div class="meta-item"><small>Nhà xuất bản</small><strong>${b.publisher}</strong></div><div class="meta-item"><small>Năm xuất bản</small><strong>${b.year}</strong></div><div class="meta-item"><small>Số trang</small><strong>${b.pages} trang</strong></div><div class="meta-item"><small>Độc giả đánh giá</small><strong>${b.rating}/5 <span class="stars">★★★★★</span></strong></div></div><div class="detail-actions"><a href="#" class="primary-btn" onclick="borrowBook(${b.id});return false;">${b.status==="available"?"Mượn sách":"Đăng ký chờ"} <i class="fa-solid fa-book-open"></i></a><button class="save-book" aria-label="Lưu sách"><i class="fa-regular fa-heart"></i></button></div><p class="detail-note"><i class="fa-solid fa-shield-heart"></i> Bookin gợi ý đọc chậm, đọc sâu và tìm thấy điều dành riêng cho bạn.</p></div></div>${related.length?`<section class="related-books"><div class="related-heading"><div><span>CÓ THỂ BẠN CŨNG THÍCH</span><h2>Những cuốn sách cùng chủ đề</h2></div><a href="books.html?category=${encodeURIComponent(b.category)}">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a></div><div class="book-grid">${related.map(card).join("")}</div></section>`:""}`}
-function borrowBook(id){const b=books.find(x=>x.id===id);alert(b.status==="available"?`Đã ghi nhận yêu cầu mượn "${b.title}".`:`Bạn đã được thêm vào danh sách chờ "${b.title}".`);}
+function borrowBook(id){const book=books.find(item=>item.id===id);if(!book)return;const type=book.status==="available"?"borrow":"waitlist",requests=readLocalList("bookin-borrow-requests");requests.push({id:book.id,type,date:new Date().toISOString()});writeLocalList("bookin-borrow-requests",requests);alert(type==="borrow"?`Đã lưu yêu cầu mượn "${book.title}" trên thiết bị này.`:`Đã lưu yêu cầu chờ "${book.title}" trên thiết bị này.`);}

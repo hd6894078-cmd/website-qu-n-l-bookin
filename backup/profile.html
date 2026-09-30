@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#faf8f3">
+<title>Trang cá nhân - Bookin</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="profile-page">
+<div id="site-header"></div>
+<main class="profile-main">
+  <section class="profile-welcome">
+    <div><span class="profile-eyebrow">KHÔNG GIAN ĐỌC CỦA BẠN</span><h1>Xin chào, <em id="profileGreeting">độc giả</em></h1><p>Một góc nhỏ để lưu lại những câu chuyện bạn muốn đọc tiếp.</p></div>
+    <a class="profile-browse" href="books.html">Khám phá kho sách <i class="fa-solid fa-arrow-right"></i></a>
+  </section>
+  <section class="profile-overview" aria-label="Tổng quan trang cá nhân">
+    <div class="profile-member"><div id="profileAvatar" class="profile-avatar" aria-hidden="true">Đ</div><div><span class="profile-member-label">THÀNH VIÊN BOOKIN</span><h2 id="profileNameDisplay">Độc giả Bookin</h2><p id="profileEmailDisplay">Thêm email của bạn</p></div><button type="button" class="profile-edit-link" id="editProfileButton"><i class="fa-solid fa-pen"></i> Chỉnh sửa</button></div>
+    <div class="profile-stats"><div><span class="profile-stat-icon saved"><i class="fa-regular fa-heart"></i></span><strong id="savedBookCount">0</strong><small>Sách đã lưu</small></div><div><span class="profile-stat-icon requests"><i class="fa-solid fa-book-open"></i></span><strong id="borrowRequestCount">0</strong><small>Yêu cầu mượn</small></div></div>
+  </section>
+  <div class="profile-columns">
+    <section class="profile-section saved-section">
+      <div class="profile-section-heading"><div><span>SỔ TAY ĐỌC</span><h2>Sách đã lưu</h2></div><a href="books.html">Tìm sách <i class="fa-solid fa-arrow-right"></i></a></div>
+      <div id="savedBooksGrid" class="book-grid profile-book-grid"></div>
+      <div id="savedBooksEmpty" class="profile-empty"><span><i class="fa-regular fa-bookmark"></i></span><h3>Chưa có sách trong sổ tay</h3><p>Lưu một cuốn sách bạn yêu thích để dễ dàng tìm lại sau.</p><a class="primary-btn" href="books.html">Khám phá sách <i class="fa-solid fa-arrow-right"></i></a></div>
+    </section>
+    <aside class="profile-side">
+      <section class="profile-section profile-edit-panel" id="profileEditPanel">
+        <div class="profile-section-heading"><div><span>THÔNG TIN</span><h2>Hồ sơ của bạn</h2></div></div>
+        <form id="profileForm" class="profile-form">
+          <label for="profileNameInput">Tên hiển thị<input id="profileNameInput" name="name" type="text" autocomplete="name" placeholder="Tên của bạn" minlength="2" required></label>
+          <label for="profileEmailInput">Email<input id="profileEmailInput" name="email" type="email" autocomplete="email" placeholder="ban@email.com"></label>
+          <button type="submit" class="profile-save">Lưu thông tin</button>
+          <p id="profileMessage" class="profile-message" role="status" aria-live="polite"></p>
+        </form>
+      </section>
+      <section class="profile-section activity-section">
+        <div class="profile-section-heading"><div><span>GẦN ĐÂY</span><h2>Yêu cầu mượn</h2></div></div>
+        <div id="profileActivity" class="profile-activity"></div>
+        <p class="profile-local-note"><i class="fa-solid fa-circle-info"></i> Thông tin hiện chỉ được lưu trên thiết bị này.</p>
+      </section>
+    </aside>
+  </div>
+</main>
+<div id="site-footer"></div>
+<script src="script.js"></script>
+</body>
+</html>

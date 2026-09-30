@@ -203,6 +203,15 @@ const scopedRequests=requests.map(request=>{if(request.userId)return request;mig
 if(migrated)writeLocalList("bookin-borrow-requests",scopedRequests);
 return scopedRequests.filter(request=>request.userId===userId);
 }
+function currentUserBookRequest(bookId){
+return currentUserBorrowRequests().find(request=>Number(request.id)===Number(bookId)&&["borrow","waitlist","active"].includes(request.type))||null;
+}
+function borrowRequestPresentation(request){
+if(!request)return null;
+if(request.type==="active")return {label:"Đang mượn",icon:"fa-book-open",className:"active"};
+if(request.type==="waitlist")return {label:"Đang chờ sách",icon:"fa-clock",className:"waitlist"};
+return {label:"Chờ xác nhận",icon:"fa-hourglass-half",className:"pending"};
+}
 function initProfilePage(){
 const form=document.getElementById("profileForm");
 if(!form)return;
@@ -326,7 +335,8 @@ button.setAttribute("aria-pressed",String(!saved));button.setAttribute("aria-lab
 });
 function card(b){
 const status=b.status==="available"?'<span class="status available"><i class="fa-solid fa-circle-check"></i> Còn sách</span>':'<span class="status borrowed"><i class="fa-solid fa-clock"></i> Đang mượn</span>';
-return `<article class="book-card"><a href="book-detail.html?id=${b.id}"><div class="book-cover ${b.cover}"><img src="${b.image}" alt="Bìa sách ${b.title}" loading="lazy" onerror="this.style.display='none'"><span>${String(b.id).padStart(2,"0")}</span><i class="fa-solid fa-book-open"></i></div></a><div class="book-info"><span class="book-category">${b.category.toUpperCase()}</span><h3>${b.title}</h3><p>${b.author}</p><div class="book-bottom"><div class="book-meta"><span class="book-rating"><i class="fa-solid fa-star"></i> ${b.rating}</span>${status}</div><a href="book-detail.html?id=${b.id}" aria-label="Xem chi tiết"><button><i class="fa-solid fa-arrow-right"></i></button></a></div></div></article>`;
+const requestStatus=borrowRequestPresentation(currentUserBookRequest(b.id)),requestBadge=requestStatus?`<span class="user-book-status ${requestStatus.className}"><i class="fa-solid ${requestStatus.icon}"></i> ${requestStatus.label}</span>`:"";
+return `<article class="book-card"><a href="book-detail.html?id=${b.id}"><div class="book-cover ${b.cover}"><img src="${b.image}" alt="Bìa sách ${b.title}" loading="lazy" onerror="this.style.display='none'"><span>${String(b.id).padStart(2,"0")}</span><i class="fa-solid fa-book-open"></i></div></a><div class="book-info"><span class="book-category">${b.category.toUpperCase()}</span><h3>${b.title}</h3><p>${b.author}</p><div class="book-bottom"><div class="book-meta"><span class="book-rating"><i class="fa-solid fa-star"></i> ${b.rating}</span>${status}${requestBadge}</div><a href="book-detail.html?id=${b.id}" aria-label="Xem chi tiết"><button><i class="fa-solid fa-arrow-right"></i></button></a></div></div></article>`;
 }
 function renderFeaturedBooks(){const el=document.getElementById("featuredBooks");if(el)el.innerHTML=books.slice(0,4).map(card).join("")}
 function initLibraryPage(){
@@ -364,6 +374,15 @@ emptyReset?.addEventListener("click",resetFilters);
 render();
 }
 function initBookDetail(){const el=document.getElementById("bookDetail"),id=Number(new URLSearchParams(location.search).get("id"))||1,b=books.find(x=>x.id===id)||books[0],related=books.filter(x=>x.category===b.category&&x.id!==b.id).slice(0,3);const status=b.status==="available"?'<span class="status available"><i class="fa-solid fa-circle-check"></i> Đang có sẵn để mượn</span>':'<span class="status borrowed"><i class="fa-solid fa-clock"></i> Đang được mượn</span>';el.innerHTML=`<div class="detail-wrap"><div class="detail-cover-column"><a class="back-link" href="books.html"><i class="fa-solid fa-arrow-left"></i> Quay lại kho sách</a><div class="detail-cover ${b.cover}"><img src="${b.image}" alt="Bìa sách ${b.title}" onerror="this.style.display='none'"><span>${String(b.id).padStart(2,"0")}</span><i class="fa-solid fa-book-open"></i></div><div class="cover-caption"><i class="fa-solid fa-bookmark"></i> Một lựa chọn đáng đọc</div></div><div class="detail-info"><div class="detail-kicker"><span class="book-category">${b.category.toUpperCase()}</span><span class="detail-rating"><i class="fa-solid fa-star"></i> ${b.rating} <small>/ 5</small></span></div><h1>${b.title}</h1><p class="detail-author">Tác giả <strong>${b.author}</strong></p>${status}<p class="detail-desc">${b.description}</p><div class="detail-meta"><div class="meta-item"><small>Nhà xuất bản</small><strong>${b.publisher}</strong></div><div class="meta-item"><small>Năm xuất bản</small><strong>${b.year}</strong></div><div class="meta-item"><small>Số trang</small><strong>${b.pages} trang</strong></div><div class="meta-item"><small>Độc giả đánh giá</small><strong>${b.rating}/5 <span class="stars">★★★★★</span></strong></div></div><div class="detail-actions"><a href="#" class="primary-btn" onclick="borrowBook(${b.id});return false;">${b.status==="available"?"Mượn sách":"Đăng ký chờ"} <i class="fa-solid fa-book-open"></i></a><button class="save-book" aria-label="Lưu sách"><i class="fa-regular fa-heart"></i></button></div><p class="detail-note"><i class="fa-solid fa-shield-heart"></i> Bookin gợi ý đọc chậm, đọc sâu và tìm thấy điều dành riêng cho bạn.</p></div></div>${related.length?`<section class="related-books"><div class="related-heading"><div><span>CÓ THỂ BẠN CŨNG THÍCH</span><h2>Những cuốn sách cùng chủ đề</h2></div><a href="books.html?category=${encodeURIComponent(b.category)}">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a></div><div class="book-grid">${related.map(card).join("")}</div></section>`:""}`}
+function updateBookBorrowStatus(){
+const detail=document.getElementById("bookDetail");if(!detail)return;
+const bookId=Number(new URLSearchParams(location.search).get("id")),request=currentUserBookRequest(bookId),presentation=borrowRequestPresentation(request);
+if(!presentation)return;
+const stockStatus=detail.querySelector(".detail-info .status"),action=detail.querySelector(".detail-actions .primary-btn");
+if(stockStatus){const badge=document.createElement("span");badge.className=`user-request-status ${presentation.className}`;badge.innerHTML=`<i class="fa-solid ${presentation.icon}" aria-hidden="true"></i> ${presentation.label}`;stockStatus.insertAdjacentElement("afterend",badge);}
+if(action){action.href="borrowed.html";action.removeAttribute("onclick");action.innerHTML=`${presentation.label} <i class="fa-solid fa-arrow-right"></i>`;}
+}
+document.addEventListener("DOMContentLoaded",updateBookBorrowStatus);
 function borrowBook(id){
 const book=books.find(item=>item.id===Number(id));if(!book)return;
 const userId=localStorage.getItem("bookin-current-user");

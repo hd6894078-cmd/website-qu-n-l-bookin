@@ -137,6 +137,12 @@ header:after{content:'';position:absolute;left:7%;right:7%;bottom:0;height:1px;b
 .borrow-dialog-confirm{border-color:var(--orange);background:var(--orange);color:#fff;text-decoration:none}
 .borrow-dialog-confirm:hover{border-color:var(--orange-dark);background:var(--orange-dark)}
 @media(max-width:480px){.borrow-dialog-panel{padding:24px 19px}.borrow-dialog-panel h2{font-size:22px}.borrow-dialog-actions>*{flex:1}}
+.user-book-status,.user-request-status{width:max-content;max-width:100%;display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid transparent;border-radius:999px;font-size:9px;font-weight:700;line-height:1.2}
+.user-book-status.pending,.user-request-status.pending{border-color:#f0dfc4;background:#fff4e6;color:#a66a24}
+.user-book-status.waitlist,.user-request-status.waitlist{border-color:#e1dcf1;background:#f2effa;color:#6b5aa0}
+.user-book-status.active,.user-request-status.active{border-color:#c9eadb;background:#e8f3eb;color:#32734e}
+.user-request-status{margin-top:10px;font-size:10px}
+.borrowed-detail-action{white-space:nowrap}
 
 .history-page{background:#f7f5ef}
 .history-main{max-width:1120px;min-height:70vh;margin:0 auto;padding:54px 5% 88px}

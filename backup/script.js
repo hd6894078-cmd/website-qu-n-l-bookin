@@ -174,7 +174,8 @@ if(passwordHash!==credential.hash){message.textContent="Email hoặc mật khẩ
 localStorage.setItem("bookin-profile",JSON.stringify({name:user.name,email:user.email}));
 localStorage.setItem("bookin-current-user",user.id);
 if(remember?.checked)localStorage.setItem("bookin-remembered-email",email);else localStorage.removeItem("bookin-remembered-email");
-message.innerHTML='Đăng nhập thành công. <a href="profile.html">Mở trang cá nhân</a>.';
+const returnTo=new URLSearchParams(location.search).get("returnTo"),destination=/^book-detail\.html\?id=\d+$/.test(returnTo||"")?returnTo:"profile.html",linkLabel=destination==="profile.html"?"Mở trang cá nhân":"Quay lại cuốn sách";
+message.innerHTML=`Đăng nhập thành công. <a href="${destination}">${linkLabel}</a>.`;
 message.classList.add("is-visible");
 }catch{
 message.textContent="Không thể xác minh tài khoản trong trình duyệt này. Hãy mở trang bằng HTTPS hoặc localhost.";
@@ -193,6 +194,15 @@ function readLocalList(key){
 try{const value=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(value)?value:[];}catch{return [];}
 }
 function writeLocalList(key,value){localStorage.setItem(key,JSON.stringify(value));}
+function currentUserBorrowRequests(){
+const userId=localStorage.getItem("bookin-current-user");
+if(!userId)return [];
+const requests=readLocalList("bookin-borrow-requests");
+let migrated=false;
+const scopedRequests=requests.map(request=>{if(request.userId)return request;migrated=true;return {...request,userId};});
+if(migrated)writeLocalList("bookin-borrow-requests",scopedRequests);
+return scopedRequests.filter(request=>request.userId===userId);
+}
 function initProfilePage(){
 const form=document.getElementById("profileForm");
 if(!form)return;
@@ -209,7 +219,7 @@ document.getElementById("profileNameDisplay").textContent=name;
 document.getElementById("profileEmailDisplay").textContent=profile.email||"Thêm email của bạn";
 document.getElementById("profileAvatar").textContent=initials;
 const savedIds=readLocalList(savedKey).map(Number),savedBooks=books.filter(book=>savedIds.includes(book.id));
-const requests=readLocalList(requestsKey),openRequests=requests.filter(request=>request.type!=="cancelled"&&request.type!=="returned");
+const requests=currentUserBorrowRequests(),openRequests=requests.filter(request=>request.type!=="cancelled"&&request.type!=="returned");
 document.getElementById("savedBookCount").textContent=savedBooks.length;
 document.getElementById("borrowRequestCount").textContent=openRequests.length;
 document.getElementById("savedBooksGrid").innerHTML=savedBooks.map(book=>`<div class="profile-saved-item">${card(book)}<button type="button" class="remove-saved" data-remove-book="${book.id}" aria-label="Bỏ lưu ${book.title}"><i class="fa-solid fa-heart-crack"></i></button></div>`).join("");
@@ -241,7 +251,7 @@ const requestList=document.getElementById("borrowRequestsList");
 if(!requestList)return;
 const requestsKey="bookin-borrow-requests";
 function renderBorrowed(){
-const requests=readLocalList(requestsKey).filter(request=>books.some(book=>book.id===Number(request.id)));
+const requests=currentUserBorrowRequests().filter(request=>books.some(book=>book.id===Number(request.id)));
 const activeLoans=requests.filter(request=>request.type==="active"),pending=requests.filter(request=>request.type==="borrow"||request.type==="waitlist");
 document.getElementById("activeLoanCount").textContent=activeLoans.length;
 document.getElementById("pendingRequestCount").textContent=pending.length;
@@ -262,8 +272,8 @@ document.getElementById("borrowRequestsEmpty").classList.toggle("hidden",pending
 }
 requestList.addEventListener("click",event=>{
 const button=event.target.closest("[data-cancel-request]");if(!button)return;
-const id=Number(button.dataset.cancelRequest),requests=readLocalList(requestsKey);
-const index=requests.findIndex(request=>Number(request.id)===id&&(request.type==="borrow"||request.type==="waitlist"));
+const id=Number(button.dataset.cancelRequest),userId=localStorage.getItem("bookin-current-user"),requests=readLocalList(requestsKey);
+const index=requests.findIndex(request=>request.userId===userId&&Number(request.id)===id&&(request.type==="borrow"||request.type==="waitlist"));
 if(index!==-1)requests[index]={...requests[index],type:"cancelled",cancelledDate:new Date().toISOString()};
 writeLocalList(requestsKey,requests);renderBorrowed();
 });
@@ -275,7 +285,7 @@ const requestsKey="bookin-borrow-requests",empty=document.getElementById("histor
 let activeFilter="all";
 function classify(request){if(request.type==="active")return "active";if(request.type==="cancelled"||request.type==="returned")return "closed";return "pending";}
 function renderHistory(){
-const requests=readLocalList(requestsKey).filter(request=>books.some(book=>book.id===Number(request.id))).slice().sort((first,second)=>new Date(second.cancelledDate||second.returnedDate||second.date||0)-new Date(first.cancelledDate||first.returnedDate||first.date||0));
+const requests=currentUserBorrowRequests().filter(request=>books.some(book=>book.id===Number(request.id))).slice().sort((first,second)=>new Date(second.cancelledDate||second.returnedDate||second.date||0)-new Date(first.cancelledDate||first.returnedDate||first.date||0));
 const pending=requests.filter(request=>classify(request)==="pending").length,active=requests.filter(request=>classify(request)==="active").length,closed=requests.filter(request=>classify(request)==="closed").length;
 document.getElementById("historyTotal").textContent=requests.length;
 document.getElementById("historyPending").textContent=pending;
@@ -354,4 +364,15 @@ emptyReset?.addEventListener("click",resetFilters);
 render();
 }
 function initBookDetail(){const el=document.getElementById("bookDetail"),id=Number(new URLSearchParams(location.search).get("id"))||1,b=books.find(x=>x.id===id)||books[0],related=books.filter(x=>x.category===b.category&&x.id!==b.id).slice(0,3);const status=b.status==="available"?'<span class="status available"><i class="fa-solid fa-circle-check"></i> Đang có sẵn để mượn</span>':'<span class="status borrowed"><i class="fa-solid fa-clock"></i> Đang được mượn</span>';el.innerHTML=`<div class="detail-wrap"><div class="detail-cover-column"><a class="back-link" href="books.html"><i class="fa-solid fa-arrow-left"></i> Quay lại kho sách</a><div class="detail-cover ${b.cover}"><img src="${b.image}" alt="Bìa sách ${b.title}" onerror="this.style.display='none'"><span>${String(b.id).padStart(2,"0")}</span><i class="fa-solid fa-book-open"></i></div><div class="cover-caption"><i class="fa-solid fa-bookmark"></i> Một lựa chọn đáng đọc</div></div><div class="detail-info"><div class="detail-kicker"><span class="book-category">${b.category.toUpperCase()}</span><span class="detail-rating"><i class="fa-solid fa-star"></i> ${b.rating} <small>/ 5</small></span></div><h1>${b.title}</h1><p class="detail-author">Tác giả <strong>${b.author}</strong></p>${status}<p class="detail-desc">${b.description}</p><div class="detail-meta"><div class="meta-item"><small>Nhà xuất bản</small><strong>${b.publisher}</strong></div><div class="meta-item"><small>Năm xuất bản</small><strong>${b.year}</strong></div><div class="meta-item"><small>Số trang</small><strong>${b.pages} trang</strong></div><div class="meta-item"><small>Độc giả đánh giá</small><strong>${b.rating}/5 <span class="stars">★★★★★</span></strong></div></div><div class="detail-actions"><a href="#" class="primary-btn" onclick="borrowBook(${b.id});return false;">${b.status==="available"?"Mượn sách":"Đăng ký chờ"} <i class="fa-solid fa-book-open"></i></a><button class="save-book" aria-label="Lưu sách"><i class="fa-regular fa-heart"></i></button></div><p class="detail-note"><i class="fa-solid fa-shield-heart"></i> Bookin gợi ý đọc chậm, đọc sâu và tìm thấy điều dành riêng cho bạn.</p></div></div>${related.length?`<section class="related-books"><div class="related-heading"><div><span>CÓ THỂ BẠN CŨNG THÍCH</span><h2>Những cuốn sách cùng chủ đề</h2></div><a href="books.html?category=${encodeURIComponent(b.category)}">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a></div><div class="book-grid">${related.map(card).join("")}</div></section>`:""}`}
-function borrowBook(id){const book=books.find(item=>item.id===id);if(!book)return;const type=book.status==="available"?"borrow":"waitlist",requests=readLocalList("bookin-borrow-requests");requests.push({id:book.id,type,date:new Date().toISOString()});writeLocalList("bookin-borrow-requests",requests);alert(type==="borrow"?`Đã lưu yêu cầu mượn "${book.title}" trên thiết bị này.`:`Đã lưu yêu cầu chờ "${book.title}" trên thiết bị này.`);}
+function borrowBook(id){
+const book=books.find(item=>item.id===Number(id));if(!book)return;
+const userId=localStorage.getItem("bookin-current-user");
+if(!userId){alert("Vui lòng đăng nhập để gửi yêu cầu mượn sách.");location.href=`login.html?returnTo=${encodeURIComponent(`book-detail.html?id=${book.id}`)}`;return;}
+const type=book.status==="available"?"borrow":"waitlist",requests=readLocalList("bookin-borrow-requests");
+const existing=requests.find(request=>request.userId===userId&&Number(request.id)===book.id&&["borrow","waitlist","active"].includes(request.type));
+if(existing){alert(existing.type==="active"?`Bạn đang mượn "${book.title}".`:`Bạn đã có yêu cầu cho "${book.title}".`);location.href="borrowed.html";return;}
+requests.push({id:book.id,userId,type,date:new Date().toISOString()});
+writeLocalList("bookin-borrow-requests",requests);
+alert(type==="borrow"?`Đã gửi yêu cầu mượn "${book.title}". Theo dõi trạng thái trong mục Sách đang mượn.`:`"${book.title}" hiện đang được mượn. Bạn đã được thêm vào danh sách chờ.`);
+location.href="borrowed.html";
+}

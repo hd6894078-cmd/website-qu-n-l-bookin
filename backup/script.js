@@ -73,6 +73,28 @@ message.classList.add("is-visible");
 });
 }
 document.addEventListener("DOMContentLoaded",initRegistrationForm);
+function initLoginForm(){
+const form=document.getElementById("loginForm");
+if(!form)return;
+const password=document.getElementById("loginPassword"),message=document.getElementById("loginMessage");
+document.querySelector("[data-login-password-toggle]")?.addEventListener("click",event=>{
+const button=event.currentTarget,visible=password.type==="password";
+password.type=visible?"text":"password";
+button.setAttribute("aria-label",visible?"Ẩn mật khẩu":"Hiện mật khẩu");
+button.innerHTML=visible?'<i class="fa-regular fa-eye-slash" aria-hidden="true"></i>':'<i class="fa-regular fa-eye" aria-hidden="true"></i>';
+});
+form.addEventListener("submit",event=>{
+event.preventDefault();
+if(!form.reportValidity())return;
+message.textContent="Thông tin đã hợp lệ. Bookin chưa kết nối máy chủ xác thực nên chưa thể đăng nhập.";
+message.classList.add("is-visible");
+});
+document.getElementById("forgotPassword")?.addEventListener("click",()=>{
+message.textContent="Tính năng khôi phục mật khẩu sẽ có khi Bookin kết nối hệ thống tài khoản.";
+message.classList.add("is-visible");
+});
+}
+document.addEventListener("DOMContentLoaded",initLoginForm);
 function card(b){
 const status=b.status==="available"?'<span class="status available"><i class="fa-solid fa-circle-check"></i> Còn sách</span>':'<span class="status borrowed"><i class="fa-solid fa-clock"></i> Đang mượn</span>';
 return `<article class="book-card"><a href="book-detail.html?id=${b.id}"><div class="book-cover ${b.cover}"><img src="${b.image}" alt="Bìa sách ${b.title}" loading="lazy" onerror="this.style.display='none'"><span>${String(b.id).padStart(2,"0")}</span><i class="fa-solid fa-book-open"></i></div></a><div class="book-info"><span class="book-category">${b.category.toUpperCase()}</span><h3>${b.title}</h3><p>${b.author}</p><div class="book-bottom"><div class="book-meta"><span class="book-rating"><i class="fa-solid fa-star"></i> ${b.rating}</span>${status}</div><a href="book-detail.html?id=${b.id}" aria-label="Xem chi tiết"><button><i class="fa-solid fa-arrow-right"></i></button></a></div></div></article>`;

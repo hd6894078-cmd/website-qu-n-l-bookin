@@ -49,6 +49,28 @@ return `<footer id="contact"><div class="footer-main"><div class="footer-brand">
 }
 document.addEventListener("DOMContentLoaded",()=>{document.getElementById("site-header")?.insertAdjacentHTML("afterbegin",header());document.getElementById("site-footer")?.insertAdjacentHTML("afterbegin",footer());const toggle=document.querySelector(".menu-toggle"),menu=document.querySelector(".mobile-menu");toggle?.addEventListener("click",()=>{const open=menu.classList.toggle("is-open");toggle.setAttribute("aria-expanded",open);toggle.innerHTML=open?'<i class="fa-solid fa-xmark"></i>':'<i class="fa-solid fa-bars"></i>';});document.querySelectorAll(".main-nav a, .mobile-menu a").forEach(link=>{if(link.pathname===location.pathname&&!link.hash)link.classList.add("active");});const headerInput=document.getElementById("headerSearchInput");if(headerInput){const submitHeaderSearch=()=>{const value=normalize(headerInput.value);if(value){location.href=`books.html?search=${encodeURIComponent(value)}`;}else{location.href="books.html";}};headerInput.addEventListener("keydown",(event)=>{if(event.key==="Enter"){event.preventDefault();submitHeaderSearch();}});document.querySelector(".header-search-btn")?.addEventListener("click",submitHeaderSearch);}
 if(document.getElementById("featuredBooks"))renderFeaturedBooks();if(document.getElementById("bookList"))initLibraryPage();if(document.getElementById("bookDetail"))initBookDetail();});
+function initAccountHeader(){
+if(!localStorage.getItem("bookin-current-user"))return;
+const accountButton=document.querySelector(".login-btn");
+if(!accountButton)return;
+accountButton.setAttribute("onclick","location.href='profile.html'");
+accountButton.setAttribute("aria-label","Trang cá nhân");
+const label=accountButton.querySelector("span");if(label)label.textContent="Tài khoản";
+}
+document.addEventListener("DOMContentLoaded",initAccountHeader);
+function normalizeEmail(email){return email.trim().toLowerCase();}
+async function derivePasswordHash(password,saltHex,iterations=120000){
+if(!globalThis.crypto?.subtle)throw new Error("secure-crypto-unavailable");
+const salt=new Uint8Array(saltHex.match(/.{2}/g).map(byte=>parseInt(byte,16)));
+const material=await crypto.subtle.importKey("raw",new TextEncoder().encode(password),"PBKDF2",false,["deriveBits"]);
+const bits=await crypto.subtle.deriveBits({name:"PBKDF2",salt,iterations,hash:"SHA-256"},material,256);
+return Array.from(new Uint8Array(bits),byte=>byte.toString(16).padStart(2,"0")).join("");
+}
+async function createCredential(email,password){
+const salt=new Uint8Array(16);crypto.getRandomValues(salt);
+const saltHex=Array.from(salt,byte=>byte.toString(16).padStart(2,"0")).join("");
+return {email,salt:saltHex,hash:await derivePasswordHash(password,saltHex)};
+}
 function initRegistrationForm(){
 const form=document.getElementById("registerForm");
 if(!form)return;
@@ -68,37 +90,66 @@ input.type=visible?"text":"password";
 button.setAttribute("aria-label",visible?"Ẩn mật khẩu":"Hiện mật khẩu");
 button.innerHTML=visible?'<i class="fa-regular fa-eye-slash" aria-hidden="true"></i>':'<i class="fa-regular fa-eye" aria-hidden="true"></i>';
 }));
-form.addEventListener("submit",event=>{
+form.addEventListener("submit",async event=>{
 event.preventDefault();
 updatePasswordFeedback();
 if(!form.reportValidity())return;
-message.textContent="Thông tin hợp lệ. Bookin chưa kết nối máy chủ, nên tài khoản chưa được tạo.";
+const email=normalizeEmail(document.getElementById("registerEmail").value),name=document.getElementById("registerName").value.trim();
+const registeredUsers=readLocalList("bookin-registered-users"),credentials=readLocalList("bookin-user-credentials");
+if([...users,...registeredUsers].some(user=>normalizeEmail(user.email)===email)||credentials.some(credential=>credential.email===email)){
+message.textContent="Email này đã được đăng ký. Hãy đăng nhập hoặc dùng email khác.";
+message.classList.add("is-visible");return;
+}
+try{
+const credential=await createCredential(email,password.value),user={id:`USR-${Date.now()}`,name,email,role:"reader",status:"active",membership:"Thành viên mới",joinedAt:new Date().toISOString().slice(0,10),favoriteCategories:[],savedBookIds:[],loans:[]};
+writeLocalList("bookin-registered-users",[...registeredUsers,user]);
+writeLocalList("bookin-user-credentials",[...credentials,credential]);
+localStorage.setItem("bookin-profile",JSON.stringify({name,email}));
+localStorage.setItem("bookin-current-user",user.id);
+message.innerHTML='Tạo tài khoản thành công trên trình duyệt này. <a href="profile.html">Mở trang cá nhân</a>.';
 message.classList.add("is-visible");
-});
-document.getElementById("loginNotice")?.addEventListener("click",()=>{
-message.textContent="Chức năng đăng nhập sẽ được kết nối khi Bookin có máy chủ tài khoản.";
+form.reset();meterFill.dataset.strength="0";meterText.textContent="Độ mạnh mật khẩu";
+}catch{
+message.textContent="Không thể lưu tài khoản trên trình duyệt này. Hãy mở trang bằng HTTPS hoặc localhost rồi thử lại.";
 message.classList.add("is-visible");
+}
 });
 }
 document.addEventListener("DOMContentLoaded",initRegistrationForm);
 function initLoginForm(){
 const form=document.getElementById("loginForm");
 if(!form)return;
-const password=document.getElementById("loginPassword"),message=document.getElementById("loginMessage");
+const emailInput=document.getElementById("loginEmail"),password=document.getElementById("loginPassword"),message=document.getElementById("loginMessage"),remember=document.querySelector('#loginForm input[name="remember"]');
+emailInput.value=localStorage.getItem("bookin-remembered-email")||"";
 document.querySelector("[data-login-password-toggle]")?.addEventListener("click",event=>{
 const button=event.currentTarget,visible=password.type==="password";
 password.type=visible?"text":"password";
 button.setAttribute("aria-label",visible?"Ẩn mật khẩu":"Hiện mật khẩu");
 button.innerHTML=visible?'<i class="fa-regular fa-eye-slash" aria-hidden="true"></i>':'<i class="fa-regular fa-eye" aria-hidden="true"></i>';
 });
-form.addEventListener("submit",event=>{
+form.addEventListener("submit",async event=>{
 event.preventDefault();
 if(!form.reportValidity())return;
-message.textContent="Thông tin đã hợp lệ. Bookin chưa kết nối máy chủ xác thực nên chưa thể đăng nhập.";
+const email=normalizeEmail(emailInput.value),credential=readLocalList("bookin-user-credentials").find(item=>item.email===email),user=readLocalList("bookin-registered-users").find(item=>normalizeEmail(item.email)===email);
+if(!credential||!user||user.status!=="active"){
+message.textContent="Email hoặc mật khẩu chưa đúng. Tài khoản mẫu chưa thể đăng nhập.";
+message.classList.add("is-visible");return;
+}
+try{
+const passwordHash=await derivePasswordHash(password.value,credential.salt,credential.iterations||120000);
+if(passwordHash!==credential.hash){message.textContent="Email hoặc mật khẩu chưa đúng.";message.classList.add("is-visible");return;}
+localStorage.setItem("bookin-profile",JSON.stringify({name:user.name,email:user.email}));
+localStorage.setItem("bookin-current-user",user.id);
+if(remember?.checked)localStorage.setItem("bookin-remembered-email",email);else localStorage.removeItem("bookin-remembered-email");
+message.innerHTML='Đăng nhập thành công. <a href="profile.html">Mở trang cá nhân</a>.';
 message.classList.add("is-visible");
+}catch{
+message.textContent="Không thể xác minh tài khoản trong trình duyệt này. Hãy mở trang bằng HTTPS hoặc localhost.";
+message.classList.add("is-visible");
+}
 });
 document.getElementById("forgotPassword")?.addEventListener("click",()=>{
-message.textContent="Tính năng khôi phục mật khẩu sẽ có khi Bookin kết nối hệ thống tài khoản.";
+message.textContent="Đặt lại mật khẩu cần dịch vụ email và máy chủ; chức năng này chưa được cấu hình.";
 message.classList.add("is-visible");
 });
 }

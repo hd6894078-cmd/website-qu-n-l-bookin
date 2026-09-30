@@ -74,7 +74,18 @@ return {email,salt:saltHex,hash:await derivePasswordHash(password,saltHex)};
 function initRegistrationForm(){
 const form=document.getElementById("registerForm");
 if(!form)return;
-const password=document.getElementById("registerPassword"),confirmPassword=document.getElementById("registerConfirm"),meterFill=document.getElementById("passwordMeterFill"),meterText=document.getElementById("passwordMeterText"),message=document.getElementById("registerMessage");
+const password=document.getElementById("registerPassword"),confirmPassword=document.getElementById("registerConfirm"),emailInput=document.getElementById("registerEmail"),emailFeedback=document.getElementById("registerEmailFeedback"),meterFill=document.getElementById("passwordMeterFill"),meterText=document.getElementById("passwordMeterText"),message=document.getElementById("registerMessage");
+function validateRegistrationEmail(){
+const email=normalizeEmail(emailInput.value);
+emailInput.setCustomValidity("");emailFeedback.textContent="";emailFeedback.className="email-feedback";
+if(!email)return false;
+if(!emailInput.validity.valid){emailFeedback.textContent="Vui lòng nhập email đúng định dạng.";emailFeedback.classList.add("is-error");return false;}
+const exists=[...users,...readLocalList("bookin-registered-users")].some(user=>normalizeEmail(user.email)===email);
+if(exists){emailInput.setCustomValidity("Email này đã được đăng ký.");emailFeedback.textContent="Email này đã được đăng ký.";emailFeedback.classList.add("is-error");return false;}
+emailFeedback.textContent="Email có thể sử dụng.";emailFeedback.classList.add("is-available");return true;
+}
+emailInput.addEventListener("input",validateRegistrationEmail);
+emailInput.addEventListener("blur",validateRegistrationEmail);
 function updatePasswordFeedback(){
 const value=password.value;
 const strength=[value.length>=8,/[A-Za-z]/.test(value),/\d/.test(value),/[^A-Za-z0-9]/.test(value)].filter(Boolean).length;
@@ -93,8 +104,9 @@ button.innerHTML=visible?'<i class="fa-regular fa-eye-slash" aria-hidden="true">
 form.addEventListener("submit",async event=>{
 event.preventDefault();
 updatePasswordFeedback();
+validateRegistrationEmail();
 if(!form.reportValidity())return;
-const email=normalizeEmail(document.getElementById("registerEmail").value),name=document.getElementById("registerName").value.trim();
+const email=normalizeEmail(emailInput.value),name=document.getElementById("registerName").value.trim();
 const registeredUsers=readLocalList("bookin-registered-users"),credentials=readLocalList("bookin-user-credentials");
 if([...users,...registeredUsers].some(user=>normalizeEmail(user.email)===email)||credentials.some(credential=>credential.email===email)){
 message.textContent="Email này đã được đăng ký. Hãy đăng nhập hoặc dùng email khác.";

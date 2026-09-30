@@ -36,7 +36,8 @@
         </label>
         <label class="register-field" for="registerEmail">
           <span>Email</span>
-          <span class="register-input-wrap"><i class="fa-regular fa-envelope" aria-hidden="true"></i><input id="registerEmail" name="email" type="email" autocomplete="email" placeholder="ban@email.com" required></span>
+          <span class="register-input-wrap"><i class="fa-regular fa-envelope" aria-hidden="true"></i><input id="registerEmail" name="email" type="email" autocomplete="email" placeholder="ban@email.com" aria-describedby="registerEmailFeedback" required></span>
+          <span id="registerEmailFeedback" class="email-feedback" aria-live="polite"></span>
         </label>
         <label class="register-field" for="registerPassword">
           <span>Mật khẩu</span>

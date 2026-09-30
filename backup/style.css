@@ -143,6 +143,7 @@ header:after{content:'';position:absolute;left:7%;right:7%;bottom:0;height:1px;b
 .user-book-status.active,.user-request-status.active{border-color:#c9eadb;background:#e8f3eb;color:#32734e}
 .user-request-status{margin-top:10px;font-size:10px}
 .borrowed-detail-action{white-space:nowrap}
+.return-loan{min-height:34px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border:1px solid #ead6d0;border-radius:8px;background:#fff;color:#a45448;font-size:10px;font-weight:700;white-space:nowrap;cursor:pointer}.return-loan:hover{background:#fff1ed;border-color:#d9aea5}.return-loan:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
 
 .history-page{background:#f7f5ef}
 .history-main{max-width:1120px;min-height:70vh;margin:0 auto;padding:54px 5% 88px}

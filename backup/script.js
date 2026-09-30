@@ -233,7 +233,7 @@ document.getElementById("savedBookCount").textContent=savedBooks.length;
 document.getElementById("borrowRequestCount").textContent=openRequests.length;
 document.getElementById("savedBooksGrid").innerHTML=savedBooks.map(book=>`<div class="profile-saved-item">${card(book)}<button type="button" class="remove-saved" data-remove-book="${book.id}" aria-label="Bỏ lưu ${book.title}"><i class="fa-solid fa-heart-crack"></i></button></div>`).join("");
 document.getElementById("savedBooksEmpty").classList.toggle("hidden",savedBooks.length>0);
-document.getElementById("profileActivity").innerHTML=requests.length?requests.slice().reverse().slice(0,4).map(request=>{const book=books.find(item=>item.id===Number(request.id));if(!book)return "";const label=request.type==="waitlist"?"Đăng ký chờ":request.type==="cancelled"?"Đã hủy yêu cầu":request.type==="active"?"Đang mượn":"Yêu cầu mượn";return `<article class="activity-item"><span class="activity-icon"><i class="fa-solid fa-book-open"></i></span><div><strong>${book.title}</strong><small>${label} · ${new Date(request.date).toLocaleDateString("vi-VN")}</small></div></article>`;}).join(""):'<p class="activity-empty">Bạn chưa gửi yêu cầu mượn nào.</p>';
+document.getElementById("profileActivity").innerHTML=requests.length?requests.slice().reverse().slice(0,4).map(request=>{const book=books.find(item=>item.id===Number(request.id));if(!book)return "";const label=request.type==="waitlist"?"Đăng ký chờ":request.type==="cancelled"?"Đã hủy yêu cầu":request.type==="returned"?"Đã trả":request.type==="active"?"Đang mượn":"Yêu cầu mượn";return `<article class="activity-item"><span class="activity-icon"><i class="fa-solid fa-book-open"></i></span><div><strong>${book.title}</strong><small>${label} · ${new Date(request.returnedDate||request.date).toLocaleDateString("vi-VN")}</small></div></article>`;}).join(""):'<p class="activity-empty">Bạn chưa gửi yêu cầu mượn nào.</p>';
 }
 form.addEventListener("submit",event=>{
 event.preventDefault();if(!form.reportValidity())return;
@@ -269,7 +269,7 @@ document.getElementById("requestLabel").textContent=`${pending.length} yêu cầ
 document.getElementById("activeLoansList").innerHTML=activeLoans.map(request=>{
 const book=books.find(item=>item.id===Number(request.id));
 const dueDate=request.dueDate?new Date(request.dueDate):null;
-return `<article class="active-loan"><img src="${book.image}" alt="Bìa sách ${book.title}" loading="lazy"><div class="active-loan-info"><span class="loan-status"><i class="fa-solid fa-circle-check"></i> Đã xác nhận</span><h3>${book.title}</h3><p>${book.author}</p><small>${dueDate?`Hạn trả: ${dueDate.toLocaleDateString("vi-VN")}`:"Chưa có thông tin hạn trả"}</small></div><a href="book-detail.html?id=${book.id}" aria-label="Xem ${book.title}"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></article>`;
+return `<article class="active-loan"><img src="${book.image}" alt="Bìa sách ${book.title}" loading="lazy"><div class="active-loan-info"><span class="loan-status"><i class="fa-solid fa-circle-check"></i> Đang mượn</span><h3>${book.title}</h3><p>${book.author}</p><small>${dueDate?`Hạn trả dự kiến: ${dueDate.toLocaleDateString("vi-VN")}`:"Chưa có thông tin hạn trả"}</small></div><a href="book-detail.html?id=${book.id}" aria-label="Xem ${book.title}"><i class="fa-solid fa-arrow-up-right-from-square"></i></a><button type="button" class="return-loan" data-return-loan="${book.id}"><i class="fa-solid fa-arrow-rotate-left"></i> Trả sách</button></article>`;
 }).join("");
 document.getElementById("activeLoansEmpty").classList.toggle("hidden",activeLoans.length>0);
 requestList.innerHTML=pending.slice().reverse().map(request=>{
@@ -279,6 +279,22 @@ return `<article class="borrow-request"><div class="request-book-icon"><i class=
 }).join("");
 document.getElementById("borrowRequestsEmpty").classList.toggle("hidden",pending.length>0);
 }
+document.getElementById("activeLoansList").addEventListener("click",event=>{
+const button=event.target.closest("[data-return-loan]");if(!button)return;
+const book=books.find(item=>item.id===Number(button.dataset.returnLoan));if(!book)return;
+const dialog=document.createElement("dialog");dialog.className="borrow-dialog return-dialog";
+dialog.innerHTML=`<div class="borrow-dialog-panel"><button class="borrow-dialog-x" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button><span class="borrow-dialog-kicker">BOOKIN READING CLUB</span><h2>Xác nhận trả sách</h2><p class="borrow-dialog-copy">Đánh dấu “${book.title}” là đã trả? Sách sẽ được chuyển vào lịch sử mượn.</p><div class="borrow-dialog-actions"><button class="borrow-dialog-cancel" type="button">Giữ sách</button><button class="borrow-dialog-confirm return-confirm" type="button">Xác nhận trả</button></div></div>`;
+document.body.append(dialog);
+const closeDialog=()=>dialog.close();
+dialog.querySelectorAll(".borrow-dialog-cancel,.borrow-dialog-x").forEach(control=>control.addEventListener("click",closeDialog));
+dialog.addEventListener("click",event=>{if(event.target===dialog)closeDialog();});
+dialog.querySelector(".return-confirm").addEventListener("click",()=>{
+const userId=localStorage.getItem("bookin-current-user"),requests=readLocalList(requestsKey),index=requests.findIndex(request=>request.userId===userId&&Number(request.id)===book.id&&request.type==="active");
+if(index!==-1){requests[index]={...requests[index],type:"returned",returnedDate:new Date().toISOString()};writeLocalList(requestsKey,requests);}
+closeDialog();renderBorrowed();
+});
+dialog.showModal();
+});
 requestList.addEventListener("click",event=>{
 const button=event.target.closest("[data-cancel-request]");if(!button)return;
 const id=Number(button.dataset.cancelRequest),userId=localStorage.getItem("bookin-current-user"),requests=readLocalList(requestsKey);
@@ -387,13 +403,13 @@ function borrowBook(id){
 const book=books.find(item=>item.id===Number(id));if(!book)return;
 const userId=localStorage.getItem("bookin-current-user");
 document.querySelector(".borrow-dialog")?.remove();
-const type=book.status==="available"?"borrow":"waitlist",isAvailable=type==="borrow";
+const isAvailable=book.status==="available",type=isAvailable?"borrow":"waitlist";
 const existing=userId?currentUserBorrowRequests().find(request=>Number(request.id)===book.id&&["borrow","waitlist","active"].includes(request.type)):null;
 const dialog=document.createElement("dialog");dialog.className="borrow-dialog";dialog.setAttribute("aria-labelledby","borrowDialogTitle");
 let content="";
 if(!userId){content=`<p class="borrow-dialog-copy">Đăng nhập để kiểm tra và gửi yêu cầu mượn cuốn sách này.</p><div class="borrow-dialog-actions"><button class="borrow-dialog-cancel" type="button">Để sau</button><a class="borrow-dialog-confirm" href="login.html?returnTo=${encodeURIComponent(`book-detail.html?id=${book.id}`)}">Đăng nhập</a></div>`;}
 else if(existing){const text=existing.type==="active"?"Bạn đang mượn cuốn sách này.":"Bạn đã có yêu cầu cho cuốn sách này.";content=`<p class="borrow-dialog-copy">${text}</p><div class="borrow-dialog-actions"><button class="borrow-dialog-cancel" type="button">Đóng</button><a class="borrow-dialog-confirm" href="borrowed.html">Xem yêu cầu</a></div>`;}
-else{content=`<p class="borrow-dialog-copy">${isAvailable?"Sách hiện còn sẵn. Sau khi xác nhận, yêu cầu sẽ được gửi tới thư viện để xử lý.":"Sách hiện đang được mượn. Bạn có thể đăng ký chờ để nhận thông báo khi sách sẵn sàng."}</p><div class="borrow-check-row"><i class="fa-solid ${isAvailable?"fa-circle-check":"fa-clock"}"></i><span>${isAvailable?"Tình trạng: Còn sách":"Tình trạng: Đang được mượn"}</span></div><div class="borrow-dialog-actions"><button class="borrow-dialog-cancel" type="button">Hủy</button><button class="borrow-dialog-confirm borrow-confirm" type="button">${isAvailable?"Xác nhận mượn":"Đăng ký chờ"}</button></div>`;}
+else{content=`<p class="borrow-dialog-copy">${isAvailable?"Xác nhận sẽ ghi nhận sách đang mượn trên tài khoản này, với hạn trả dự kiến sau 14 ngày. Trạng thái được lưu trên thiết bị.":"Sách hiện đang được mượn. Bạn có thể đăng ký chờ để nhận thông báo khi sách sẵn sàng."}</p><div class="borrow-check-row"><i class="fa-solid ${isAvailable?"fa-circle-check":"fa-clock"}"></i><span>${isAvailable?"Tình trạng: Còn sách":"Tình trạng: Đang được mượn"}</span></div><div class="borrow-dialog-actions"><button class="borrow-dialog-cancel" type="button">Hủy</button><button class="borrow-dialog-confirm borrow-confirm" type="button">${isAvailable?"Xác nhận mượn":"Đăng ký chờ"}</button></div>`;}
 dialog.innerHTML=`<div class="borrow-dialog-panel"><button class="borrow-dialog-x" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button><span class="borrow-dialog-kicker">BOOKIN READING CLUB</span><h2 id="borrowDialogTitle">${isAvailable?"Kiểm tra trước khi mượn":"Đăng ký chờ sách"}</h2><div class="borrow-dialog-book"><img src="${book.image}" alt="Bìa sách ${book.title}"><div><strong>${book.title}</strong><span>${book.author}</span><small>${book.category}</small></div></div>${content}</div>`;
 document.body.append(dialog);
 const closeDialog=()=>dialog.close();
@@ -404,7 +420,8 @@ const activeUserId=localStorage.getItem("bookin-current-user");
 if(!activeUserId){closeDialog();location.href=`login.html?returnTo=${encodeURIComponent(`book-detail.html?id=${book.id}`)}`;return;}
 const requests=readLocalList("bookin-borrow-requests"),alreadyRequested=requests.some(request=>request.userId===activeUserId&&Number(request.id)===book.id&&["borrow","waitlist","active"].includes(request.type));
 if(alreadyRequested){closeDialog();location.href="borrowed.html";return;}
-requests.push({id:book.id,userId:activeUserId,type,date:new Date().toISOString()});
+const borrowedAt=new Date(),dueDate=new Date(borrowedAt);dueDate.setDate(dueDate.getDate()+14);
+requests.push({id:book.id,userId:activeUserId,type:isAvailable?"active":"waitlist",date:borrowedAt.toISOString(),...(isAvailable?{dueDate:dueDate.toISOString()}: {})});
 writeLocalList("bookin-borrow-requests",requests);closeDialog();location.href="borrowed.html";
 });
 dialog.showModal();

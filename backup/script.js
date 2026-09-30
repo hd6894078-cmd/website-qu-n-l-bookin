@@ -199,9 +199,34 @@ const userId=localStorage.getItem("bookin-current-user");
 if(!userId)return [];
 const requests=readLocalList("bookin-borrow-requests");
 let migrated=false;
-const scopedRequests=requests.map(request=>{if(request.userId)return request;migrated=true;return {...request,userId};});
+const scopedRequests=requests.map((request,index)=>{
+let scopedRequest=request;
+if(!scopedRequest.userId){scopedRequest={...scopedRequest,userId};migrated=true;}
+if(!scopedRequest.entryId){scopedRequest={...scopedRequest,entryId:`legacy-${scopedRequest.userId}-${scopedRequest.id}-${scopedRequest.date||index}`};migrated=true;}
+return scopedRequest;
+});
 if(migrated)writeLocalList("bookin-borrow-requests",scopedRequests);
 return scopedRequests.filter(request=>request.userId===userId);
+}
+function appendBorrowEvent(event){
+const events=readLocalList("bookin-borrow-events"),eventId=`${event.entryId}:${event.action}`;
+if(events.some(item=>item.eventId===eventId))return;
+events.push({eventId,userId:event.userId,entryId:event.entryId,bookId:Number(event.bookId),action:event.action,date:event.date,dueDate:event.dueDate||null});
+writeLocalList("bookin-borrow-events",events);
+}
+function currentUserBorrowEvents(){
+const userId=localStorage.getItem("bookin-current-user");if(!userId)return [];
+const requests=currentUserBorrowRequests(),events=readLocalList("bookin-borrow-events");
+let eventsChanged=false;
+requests.forEach(request=>{
+const initialAction=request.type==="waitlist"||request.previousType==="waitlist"?"waitlist_requested":request.type==="active"||request.type==="returned"?"borrowed":"request_created";
+const initialEvent={eventId:`${request.entryId}:${initialAction}`,userId,entryId:request.entryId,bookId:Number(request.id),action:initialAction,date:request.date||new Date().toISOString(),dueDate:request.dueDate||null};
+if(!events.some(event=>event.eventId===initialEvent.eventId)){events.push(initialEvent);eventsChanged=true;}
+if(request.type==="returned"&&request.returnedDate){const returnEvent={eventId:`${request.entryId}:returned`,userId,entryId:request.entryId,bookId:Number(request.id),action:"returned",date:request.returnedDate};if(!events.some(event=>event.eventId===returnEvent.eventId)){events.push(returnEvent);eventsChanged=true;}}
+if(request.type==="cancelled"&&request.cancelledDate){const cancelEvent={eventId:`${request.entryId}:cancelled`,userId,entryId:request.entryId,bookId:Number(request.id),action:"cancelled",date:request.cancelledDate};if(!events.some(event=>event.eventId===cancelEvent.eventId)){events.push(cancelEvent);eventsChanged=true;}}
+});
+if(eventsChanged)writeLocalList("bookin-borrow-events",events);
+return events.filter(event=>event.userId===userId);
 }
 function currentUserBookRequest(bookId){
 return currentUserBorrowRequests().filter(request=>Number(request.id)===Number(bookId)&&["borrow","waitlist","active","returned","cancelled"].includes(request.type)).slice(-1)[0]||null;
@@ -292,7 +317,7 @@ dialog.querySelectorAll(".borrow-dialog-cancel,.borrow-dialog-x").forEach(contro
 dialog.addEventListener("click",event=>{if(event.target===dialog)closeDialog();});
 dialog.querySelector(".return-confirm").addEventListener("click",()=>{
 const userId=localStorage.getItem("bookin-current-user"),requests=readLocalList(requestsKey),index=requests.findIndex(request=>request.userId===userId&&Number(request.id)===book.id&&request.type==="active");
-if(index!==-1){requests[index]={...requests[index],type:"returned",returnedDate:new Date().toISOString()};writeLocalList(requestsKey,requests);}
+if(index!==-1){const returnedDate=new Date().toISOString();requests[index]={...requests[index],type:"returned",returnedDate};writeLocalList(requestsKey,requests);appendBorrowEvent({userId,entryId:requests[index].entryId,bookId:book.id,action:"returned",date:returnedDate});}
 closeDialog();renderBorrowed();
 });
 dialog.showModal();
@@ -301,33 +326,38 @@ requestList.addEventListener("click",event=>{
 const button=event.target.closest("[data-cancel-request]");if(!button)return;
 const id=Number(button.dataset.cancelRequest),userId=localStorage.getItem("bookin-current-user"),requests=readLocalList(requestsKey);
 const index=requests.findIndex(request=>request.userId===userId&&Number(request.id)===id&&(request.type==="borrow"||request.type==="waitlist"));
-if(index!==-1)requests[index]={...requests[index],type:"cancelled",cancelledDate:new Date().toISOString()};
+if(index!==-1){const cancelledDate=new Date().toISOString(),previousType=requests[index].type;requests[index]={...requests[index],type:"cancelled",previousType,cancelledDate};appendBorrowEvent({userId,entryId:requests[index].entryId,bookId:id,action:"cancelled",date:cancelledDate});}
 writeLocalList(requestsKey,requests);renderBorrowed();
 });
 renderBorrowed();
 }
 function initBorrowHistoryPage(){
 const list=document.getElementById("historyList");if(!list)return;
-const requestsKey="bookin-borrow-requests",empty=document.getElementById("historyEmpty");
+const empty=document.getElementById("historyEmpty");
 let activeFilter="all";
-function classify(request){if(request.type==="active")return "active";if(request.type==="cancelled"||request.type==="returned")return "closed";return "pending";}
+function classifyEvent(event,activeEntries,currentRequests){
+if(event.action==="borrowed")return activeEntries.has(event.entryId)?"active":"closed";
+if(event.action==="returned"||event.action==="cancelled")return "closed";
+const request=currentRequests.get(event.entryId);
+return request&&(request.type==="borrow"||request.type==="waitlist")?"pending":"closed";
+}
 function renderHistory(){
-const requests=currentUserBorrowRequests().filter(request=>books.some(book=>book.id===Number(request.id))).slice().sort((first,second)=>new Date(second.cancelledDate||second.returnedDate||second.date||0)-new Date(first.cancelledDate||first.returnedDate||first.date||0));
-const pending=requests.filter(request=>classify(request)==="pending").length,active=requests.filter(request=>classify(request)==="active").length,closed=requests.filter(request=>classify(request)==="closed").length;
-document.getElementById("historyTotal").textContent=requests.length;
+const requests=currentUserBorrowRequests().filter(request=>books.some(book=>book.id===Number(request.id))),currentRequests=new Map(requests.map(request=>[request.entryId,request])),activeEntries=new Set(requests.filter(request=>request.type==="active").map(request=>request.entryId));
+const events=currentUserBorrowEvents().filter(event=>books.some(book=>book.id===Number(event.bookId))).slice().sort((first,second)=>new Date(second.date)-new Date(first.date));
+const pending=requests.filter(request=>request.type==="borrow"||request.type==="waitlist").length,active=requests.filter(request=>request.type==="active").length,closed=events.filter(event=>event.action==="returned"||event.action==="cancelled").length;
+document.getElementById("historyTotal").textContent=events.length;
 document.getElementById("historyPending").textContent=pending;
 document.getElementById("historyActive").textContent=active;
 document.getElementById("historyClosed").textContent=closed;
-const visible=activeFilter==="all"?requests:requests.filter(request=>classify(request)===activeFilter);
-list.innerHTML=visible.map(request=>{
-const book=books.find(item=>item.id===Number(request.id)),state=classify(request);
-const labels={pending:request.type==="waitlist"?"Đang chờ sách":"Chờ xác nhận",active:"Đang mượn",closed:request.type==="returned"?"Đã trả":"Đã hủy"};
-const icons={pending:request.type==="waitlist"?"fa-clock":"fa-hourglass-half",active:"fa-book-open",closed:request.type==="returned"?"fa-check":"fa-xmark"};
-const eventDate=request.cancelledDate||request.returnedDate||request.date;
-return `<article class="history-row"><div class="history-timeline"><span class="history-state-icon ${state}"><i class="fa-solid ${icons[state]}"></i></span></div><img class="history-cover" src="${book.image}" alt="Bìa sách ${book.title}" loading="lazy"><div class="history-book"><span class="history-category">${book.category}</span><h3>${book.title}</h3><p>${book.author}</p><small>${eventDate?new Date(eventDate).toLocaleString("vi-VN",{dateStyle:"medium",timeStyle:"short"}):"Không có ngày ghi nhận"}</small></div><span class="history-status ${state}"><i class="fa-solid ${icons[state]}"></i> ${labels[state]}</span><a class="history-detail" href="book-detail.html?id=${book.id}" aria-label="Xem chi tiết ${book.title}" title="Xem sách"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></article>`;
+const visible=events.filter(event=>activeFilter==="all"||classifyEvent(event,activeEntries,currentRequests)===activeFilter);
+list.innerHTML=visible.map(event=>{
+const book=books.find(item=>item.id===Number(event.bookId)),state=classifyEvent(event,activeEntries,currentRequests);
+const labels={borrowed:state==="active"?"Đang mượn":"Đã mượn",returned:"Đã trả",cancelled:"Đã hủy",waitlist_requested:"Đăng ký chờ",request_created:"Yêu cầu mượn"};
+const icons={borrowed:"fa-book-open",returned:"fa-check",cancelled:"fa-xmark",waitlist_requested:"fa-clock",request_created:"fa-hourglass-half"};
+return `<article class="history-row"><div class="history-timeline"><span class="history-state-icon ${state}"><i class="fa-solid ${icons[event.action]||"fa-book"}"></i></span></div><img class="history-cover" src="${book.image}" alt="Bìa sách ${book.title}" loading="lazy"><div class="history-book"><span class="history-category">${book.category}</span><h3>${book.title}</h3><p>${book.author}</p><small>${event.date?new Date(event.date).toLocaleString("vi-VN",{dateStyle:"medium",timeStyle:"short"}):"Không có ngày ghi nhận"}</small></div><span class="history-status ${state}"><i class="fa-solid ${icons[event.action]||"fa-book"}"></i> ${labels[event.action]||"Cập nhật"}</span><a class="history-detail" href="book-detail.html?id=${book.id}" aria-label="Xem chi tiết ${book.title}" title="Xem sách"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></article>`;
 }).join("");
-if(requests.length&&visible.length===0){empty.querySelector("h3").textContent="Không có mục nào trong bộ lọc này";empty.querySelector("p").textContent="Chọn trạng thái khác để xem hoạt động của bạn.";}
-else if(!requests.length){empty.querySelector("h3").textContent="Chưa có hoạt động mượn sách";empty.querySelector("p").textContent="Các yêu cầu mượn, đăng ký chờ và trạng thái cập nhật sẽ được lưu lại tại đây.";}
+if(events.length&&visible.length===0){empty.querySelector("h3").textContent="Không có mục nào trong bộ lọc này";empty.querySelector("p").textContent="Chọn trạng thái khác để xem hoạt động của bạn.";}
+else if(!events.length){empty.querySelector("h3").textContent="Chưa có hoạt động mượn sách";empty.querySelector("p").textContent="Mỗi lần mượn, đăng ký chờ, hủy hoặc trả sách sẽ được lưu thành một mốc lịch sử.";}
 empty.classList.toggle("hidden",visible.length>0);
 list.classList.toggle("hidden",visible.length===0);
 }
@@ -423,8 +453,11 @@ if(!activeUserId){closeDialog();location.href=`login.html?returnTo=${encodeURICo
 const requests=readLocalList("bookin-borrow-requests"),alreadyRequested=requests.some(request=>request.userId===activeUserId&&Number(request.id)===book.id&&["borrow","waitlist","active"].includes(request.type));
 if(alreadyRequested){closeDialog();location.href="borrowed.html";return;}
 const borrowedAt=new Date(),dueDate=new Date(borrowedAt);dueDate.setDate(dueDate.getDate()+14);
-requests.push({id:book.id,userId:activeUserId,type:isAvailable?"active":"waitlist",date:borrowedAt.toISOString(),...(isAvailable?{dueDate:dueDate.toISOString()}: {})});
-writeLocalList("bookin-borrow-requests",requests);closeDialog();location.href="borrowed.html";
+const entryId=`loan-${activeUserId}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,action=isAvailable?"borrowed":"waitlist_requested",date=borrowedAt.toISOString(),dueDateValue=isAvailable?dueDate.toISOString():null;
+requests.push({id:book.id,userId:activeUserId,entryId,type:isAvailable?"active":"waitlist",date,...(dueDateValue?{dueDate:dueDateValue}: {})});
+writeLocalList("bookin-borrow-requests",requests);
+appendBorrowEvent({userId:activeUserId,entryId,bookId:book.id,action,date,dueDate:dueDateValue});
+closeDialog();location.href="borrowed.html";
 });
 dialog.showModal();
 }

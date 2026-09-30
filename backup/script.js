@@ -34,13 +34,45 @@ const books = [
 const normalize=(value="")=>value.toLowerCase().replace(/đ/g,"d").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
 function header(){
 return `<div class="top-bar"><div><i class="fa-solid fa-book-open"></i> Không gian dành cho những người yêu sách</div><div class="top-bar-contact"><span><i class="fa-solid fa-clock"></i> Mở cửa mỗi ngày 8:00 - 21:00</span><span><i class="fa-solid fa-phone"></i> 0123 456 789</span></div></div>
-<header><a class="logo" href="index.html" aria-label="Bookin - Trang chủ"><div class="logo-icon"><i class="fa-solid fa-book-open"></i></div><div><strong>BOOKIN</strong><span>Library & beyond</span></div></a><nav class="main-nav"><a href="index.html">Trang chủ</a><a href="books.html">Kho sách <i class="fa-solid fa-chevron-down"></i></a><a href="books.html?category=Văn học">Thể loại</a><a href="index.html#about">Câu chuyện</a><a href="#contact">Liên hệ</a></nav><div class="header-search" role="search"><input id="headerSearchInput" type="search" placeholder="Tìm sách, tác giả, chủ đề..." aria-label="Tìm kiếm sách"><button type="button" class="header-search-btn" aria-label="Tìm kiếm"><i class="fa-solid fa-magnifying-glass"></i></button></div><div class="header-actions"><button class="search-btn" aria-label="Tìm kiếm sách" onclick="location.href='books.html'"><i class="fa-solid fa-magnifying-glass"></i><span>Tìm sách</span></button><button class="login-btn" onclick="alert('Chức năng đăng nhập sẽ được kết nối ở phiên bản tiếp theo.')"><i class="fa-regular fa-user"></i><span>Đăng nhập</span></button><button class="menu-toggle" aria-label="Mở menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button></div><div class="mobile-menu"><a href="index.html">Trang chủ</a><a href="books.html">Kho sách</a><a href="books.html?category=Văn học">Thể loại</a><a href="index.html#about">Câu chuyện</a><a href="#contact">Liên hệ</a></div></header>`;
+<header><a class="logo" href="index.html" aria-label="Bookin - Trang chủ"><div class="logo-icon"><i class="fa-solid fa-book-open"></i></div><div><strong>BOOKIN</strong><span>Library & beyond</span></div></a><nav class="main-nav"><a href="index.html">Trang chủ</a><a href="books.html">Kho sách <i class="fa-solid fa-chevron-down"></i></a><a href="books.html?category=Văn học">Thể loại</a><a href="index.html#about">Câu chuyện</a><a href="#contact">Liên hệ</a></nav><div class="header-search" role="search"><input id="headerSearchInput" type="search" placeholder="Tìm sách, tác giả, chủ đề..." aria-label="Tìm kiếm sách"><button type="button" class="header-search-btn" aria-label="Tìm kiếm"><i class="fa-solid fa-magnifying-glass"></i></button></div><div class="header-actions"><button class="search-btn" aria-label="Tìm kiếm sách" onclick="location.href='books.html'"><i class="fa-solid fa-magnifying-glass"></i><span>Tìm sách</span></button><button class="login-btn" onclick="location.href='register.html'"><i class="fa-regular fa-user"></i><span>Đăng ký</span></button><button class="menu-toggle" aria-label="Mở menu" aria-expanded="false"><i class="fa-solid fa-bars"></i></button></div><div class="mobile-menu"><a href="index.html">Trang chủ</a><a href="books.html">Kho sách</a><a href="books.html?category=Văn học">Thể loại</a><a href="index.html#about">Câu chuyện</a><a href="#contact">Liên hệ</a></div></header>`;
 }
 function footer(){
 return `<footer id="contact"><div class="footer-main"><div class="footer-brand"><div class="logo"><div class="logo-icon"><i class="fa-solid fa-book-open"></i></div><div><strong>BOOKIN</strong><span>Library</span></div></div><p>Không gian kết nối bạn với thế giới tri thức.</p></div><div><h3>Khám phá</h3><a href="books.html">Kho sách</a><a href="books.html">Thể loại</a><a href="index.html#books">Sách nổi bật</a></div><div><h3>Bookin</h3><a href="index.html#about">Giới thiệu</a><a href="#contact">Liên hệ</a><a href="#">Hỗ trợ</a></div><div><h3>Theo dõi chúng tôi</h3><div class="social"><a href="#"><i class="fa-brands fa-facebook-f"></i></a><a href="#"><i class="fa-brands fa-instagram"></i></a><a href="#"><i class="fa-brands fa-tiktok"></i></a></div></div></div><div class="footer-bottom"><span>© 2026 Bookin Library</span><span>Made with ♥ for book lovers</span></div></footer>`;
 }
 document.addEventListener("DOMContentLoaded",()=>{document.getElementById("site-header")?.insertAdjacentHTML("afterbegin",header());document.getElementById("site-footer")?.insertAdjacentHTML("afterbegin",footer());const toggle=document.querySelector(".menu-toggle"),menu=document.querySelector(".mobile-menu");toggle?.addEventListener("click",()=>{const open=menu.classList.toggle("is-open");toggle.setAttribute("aria-expanded",open);toggle.innerHTML=open?'<i class="fa-solid fa-xmark"></i>':'<i class="fa-solid fa-bars"></i>';});document.querySelectorAll(".main-nav a, .mobile-menu a").forEach(link=>{if(link.pathname===location.pathname&&!link.hash)link.classList.add("active");});const headerInput=document.getElementById("headerSearchInput");if(headerInput){const submitHeaderSearch=()=>{const value=normalize(headerInput.value);if(value){location.href=`books.html?search=${encodeURIComponent(value)}`;}else{location.href="books.html";}};headerInput.addEventListener("keydown",(event)=>{if(event.key==="Enter"){event.preventDefault();submitHeaderSearch();}});document.querySelector(".header-search-btn")?.addEventListener("click",submitHeaderSearch);}
 if(document.getElementById("featuredBooks"))renderFeaturedBooks();if(document.getElementById("bookList"))initLibraryPage();if(document.getElementById("bookDetail"))initBookDetail();});
+function initRegistrationForm(){
+const form=document.getElementById("registerForm");
+if(!form)return;
+const password=document.getElementById("registerPassword"),confirmPassword=document.getElementById("registerConfirm"),meterFill=document.getElementById("passwordMeterFill"),meterText=document.getElementById("passwordMeterText"),message=document.getElementById("registerMessage");
+function updatePasswordFeedback(){
+const value=password.value;
+const strength=[value.length>=8,/[A-Za-z]/.test(value),/\d/.test(value),/[^A-Za-z0-9]/.test(value)].filter(Boolean).length;
+meterFill.dataset.strength=String(strength);
+meterText.textContent=value?(["","Yếu","Trung bình","Khá","Mạnh"][strength]):"Độ mạnh mật khẩu";
+confirmPassword.setCustomValidity(confirmPassword.value&&confirmPassword.value!==value?"Mật khẩu xác nhận chưa khớp.":"");
+}
+password.addEventListener("input",updatePasswordFeedback);
+confirmPassword.addEventListener("input",updatePasswordFeedback);
+document.querySelectorAll("[data-password-toggle]").forEach(button=>button.addEventListener("click",()=>{
+const input=document.getElementById(button.dataset.passwordToggle),visible=input.type==="password";
+input.type=visible?"text":"password";
+button.setAttribute("aria-label",visible?"Ẩn mật khẩu":"Hiện mật khẩu");
+button.innerHTML=visible?'<i class="fa-regular fa-eye-slash" aria-hidden="true"></i>':'<i class="fa-regular fa-eye" aria-hidden="true"></i>';
+}));
+form.addEventListener("submit",event=>{
+event.preventDefault();
+updatePasswordFeedback();
+if(!form.reportValidity())return;
+message.textContent="Thông tin hợp lệ. Bookin chưa kết nối máy chủ, nên tài khoản chưa được tạo.";
+message.classList.add("is-visible");
+});
+document.getElementById("loginNotice")?.addEventListener("click",()=>{
+message.textContent="Chức năng đăng nhập sẽ được kết nối khi Bookin có máy chủ tài khoản.";
+message.classList.add("is-visible");
+});
+}
+document.addEventListener("DOMContentLoaded",initRegistrationForm);
 function card(b){
 const status=b.status==="available"?'<span class="status available"><i class="fa-solid fa-circle-check"></i> Còn sách</span>':'<span class="status borrowed"><i class="fa-solid fa-clock"></i> Đang mượn</span>';
 return `<article class="book-card"><a href="book-detail.html?id=${b.id}"><div class="book-cover ${b.cover}"><img src="${b.image}" alt="Bìa sách ${b.title}" loading="lazy" onerror="this.style.display='none'"><span>${String(b.id).padStart(2,"0")}</span><i class="fa-solid fa-book-open"></i></div></a><div class="book-info"><span class="book-category">${b.category.toUpperCase()}</span><h3>${b.title}</h3><p>${b.author}</p><div class="book-bottom"><div class="book-meta"><span class="book-rating"><i class="fa-solid fa-star"></i> ${b.rating}</span>${status}</div><a href="book-detail.html?id=${b.id}" aria-label="Xem chi tiết"><button><i class="fa-solid fa-arrow-right"></i></button></a></div></div></article>`;

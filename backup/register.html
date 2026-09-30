@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#faf8f3">
+<title>Tạo tài khoản - Bookin</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="register-page">
+<div id="site-header"></div>
+<main class="register-main">
+  <section class="register-layout" aria-labelledby="registerTitle">
+    <div class="register-story">
+      <span class="register-eyebrow"><i class="fa-solid fa-book-open"></i> BOOKIN READING CLUB</span>
+      <h1>Mở ra một<br><em>chương mới.</em></h1>
+      <p>Tạo tài khoản để bắt đầu hành trình khám phá những cuốn sách hợp với bạn.</p>
+      <div class="register-note">
+        <i class="fa-solid fa-quote-left" aria-hidden="true"></i>
+        <blockquote>“Đọc sách là cách ta sống thêm nhiều cuộc đời.”</blockquote>
+        <span>Góc đọc Bookin</span>
+      </div>
+      <div class="register-book-art" aria-hidden="true"><i class="fa-solid fa-book-open"></i></div>
+    </div>
+    <div class="register-panel">
+      <div class="register-panel-heading">
+        <span class="register-step">THÀNH VIÊN MỚI</span>
+        <h2 id="registerTitle">Tạo tài khoản</h2>
+        <p>Điền thông tin bên dưới để tham gia Bookin.</p>
+      </div>
+      <form id="registerForm" class="register-form">
+        <label class="register-field" for="registerName">
+          <span>Họ và tên</span>
+          <span class="register-input-wrap"><i class="fa-regular fa-user" aria-hidden="true"></i><input id="registerName" name="name" type="text" autocomplete="name" placeholder="Tên của bạn" minlength="2" required></span>
+        </label>
+        <label class="register-field" for="registerEmail">
+          <span>Email</span>
+          <span class="register-input-wrap"><i class="fa-regular fa-envelope" aria-hidden="true"></i><input id="registerEmail" name="email" type="email" autocomplete="email" placeholder="ban@email.com" required></span>
+        </label>
+        <label class="register-field" for="registerPassword">
+          <span>Mật khẩu</span>
+          <span class="register-input-wrap"><i class="fa-solid fa-lock" aria-hidden="true"></i><input id="registerPassword" name="password" type="password" autocomplete="new-password" placeholder="Ít nhất 8 ký tự" minlength="8" required><button class="password-toggle" type="button" data-password-toggle="registerPassword" aria-label="Hiện mật khẩu"><i class="fa-regular fa-eye" aria-hidden="true"></i></button></span>
+          <span class="password-meter" aria-live="polite"><span class="password-meter-track"><span id="passwordMeterFill"></span></span><span id="passwordMeterText">Độ mạnh mật khẩu</span></span>
+        </label>
+        <label class="register-field" for="registerConfirm">
+          <span>Xác nhận mật khẩu</span>
+          <span class="register-input-wrap"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><input id="registerConfirm" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Nhập lại mật khẩu" required><button class="password-toggle" type="button" data-password-toggle="registerConfirm" aria-label="Hiện mật khẩu"><i class="fa-regular fa-eye" aria-hidden="true"></i></button></span>
+        </label>
+        <label class="register-terms"><input id="registerTerms" name="terms" type="checkbox" required><span>Tôi đồng ý với <a href="#terms">điều khoản sử dụng</a> và chính sách bảo mật.</span></label>
+        <button class="register-submit" type="submit">Tạo tài khoản <i class="fa-solid fa-arrow-right"></i></button>
+        <p id="registerMessage" class="register-message" role="status" aria-live="polite"></p>
+      </form>
+      <p class="register-login">Đã có tài khoản? <button type="button" id="loginNotice">Đăng nhập</button></p>
+      <a class="register-back" href="index.html"><i class="fa-solid fa-arrow-left"></i> Quay về trang chủ</a>
+    </div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="script.js"></script>
+</body>
+</html>

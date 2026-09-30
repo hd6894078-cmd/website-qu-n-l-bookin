@@ -53,6 +53,50 @@ header:after{content:'';position:absolute;left:7%;right:7%;bottom:0;height:1px;b
 @media(max-width:900px){.detail-reading-guide{margin:0 5%;padding-bottom:65px;grid-template-columns:1fr;gap:28px}.guide-heading p{max-width:450px}.detail-service{margin:0 5% 65px;padding:35px 28px;grid-template-columns:1fr 1fr}.detail-service .primary-btn{justify-self:start}}
 @media(max-width:600px){.guide-steps{grid-template-columns:1fr}.guide-steps article{min-height:auto}.detail-service{display:block}.detail-service h2{font-size:27px;margin-bottom:24px}.service-points{margin-bottom:24px}.detail-service:after{font-size:80px}}
 
+.register-page{background:#f8f5ef}.register-main{min-height:calc(100vh - 180px);padding:54px 5% 72px;background:radial-gradient(ellipse at 18% 20%,rgba(227,150,82,.13),transparent 34%),linear-gradient(135deg,#f8f5ef 0%,#fffdf9 58%,#edf2ec 100%)}
+.register-layout{max-width:1040px;min-height:650px;margin:0 auto;display:grid;grid-template-columns:.88fr 1.12fr;border:1px solid rgba(225,216,202,.85);border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 28px 70px rgba(39,35,28,.12)}
+.register-story{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:flex-start;padding:54px 46px;color:#fff;background:linear-gradient(150deg,#28372f,#385344 62%,#4a6a55)}
+.register-story:after{content:"";position:absolute;width:310px;height:310px;border:1px solid rgba(255,255,255,.12);border-radius:50%;right:-130px;bottom:-115px;box-shadow:0 0 0 28px rgba(255,255,255,.035),0 0 0 58px rgba(255,255,255,.025)}
+.register-eyebrow{display:inline-flex;align-items:center;gap:9px;color:#f4c08c;font-size:10px;font-weight:700;letter-spacing:1.6px}
+.register-story h1{position:relative;z-index:1;margin:52px 0 16px;font-family:'Playfair Display',serif;font-size:48px;line-height:1.05}
+.register-story h1 em{color:#f3b879;font-style:normal}
+.register-story>p{position:relative;z-index:1;max-width:320px;color:#e0e8e1;font-size:14px}
+.register-note{position:relative;z-index:1;margin-top:auto;padding-top:36px;max-width:320px}
+.register-note>i{color:#f1b776;font-size:17px}
+.register-note blockquote{margin-top:10px;font-family:'Playfair Display',serif;font-size:19px;line-height:1.35}
+.register-note span{display:block;margin-top:9px;color:#c4d0c6;font-size:11px}
+.register-book-art{position:absolute;right:40px;bottom:42px;color:rgba(255,255,255,.08);font-size:120px;transform:rotate(-12deg)}
+.register-panel{padding:48px clamp(28px,5vw,62px);display:flex;flex-direction:column;justify-content:center}
+.register-step{color:var(--orange);font-size:10px;font-weight:700;letter-spacing:1.7px}
+.register-panel-heading h2{margin-top:7px;font-family:'Playfair Display',serif;font-size:34px;line-height:1.15;color:var(--ink)}
+.register-panel-heading p{margin-top:8px;color:var(--muted);font-size:13px}
+.register-form{display:grid;gap:15px;margin-top:25px}
+.register-field{display:grid;gap:6px;color:#494a43;font-size:12px;font-weight:700}
+.register-input-wrap{height:46px;display:flex;align-items:center;gap:10px;padding:0 12px;border:1px solid #e8e3d9;border-radius:9px;background:#fcfbf8;color:#a29b8f;transition:border-color .2s,box-shadow .2s,background .2s}
+.register-input-wrap:focus-within{border-color:#e9a766;background:#fff;box-shadow:0 0 0 3px rgba(230,126,34,.11)}
+.register-input-wrap>i{width:16px;text-align:center;font-size:13px}
+.register-input-wrap input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--ink);font-size:13px;font-weight:400}
+.register-input-wrap input::placeholder{color:#aaa69e}
+.password-toggle{width:30px;height:30px;flex:0 0 30px;border:0;border-radius:7px;background:transparent;color:#858176;cursor:pointer}
+.password-toggle:hover{background:#f4ede3;color:var(--orange)}
+.password-meter{display:flex;align-items:center;gap:9px;color:#858176;font-size:10px;font-weight:500}
+.password-meter-track{height:4px;flex:1;overflow:hidden;border-radius:5px;background:#eee9e0}
+.password-meter-track>span{display:block;width:0;height:100%;border-radius:inherit;background:#d66b54;transition:width .2s,background .2s}
+.password-meter-track>span[data-strength="1"]{width:25%;background:#d66b54}.password-meter-track>span[data-strength="2"]{width:50%;background:#e4a348}.password-meter-track>span[data-strength="3"]{width:75%;background:#80a85e}.password-meter-track>span[data-strength="4"]{width:100%;background:#34845f}
+.register-terms{display:flex;align-items:flex-start;gap:9px;color:#77766f;font-size:11px;line-height:1.5}
+.register-terms input{width:15px;height:15px;flex:0 0 15px;margin-top:1px;accent-color:var(--orange)}
+.register-terms a,.register-login button{color:var(--orange-dark);font-weight:700}
+.register-submit{height:48px;display:flex;align-items:center;justify-content:center;gap:10px;border:0;border-radius:9px;background:var(--orange);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 9px 18px rgba(230,126,34,.2);transition:background .2s,transform .2s,box-shadow .2s}
+.register-submit:hover{background:var(--orange-dark);box-shadow:0 12px 22px rgba(201,99,14,.24);transform:translateY(-1px)}
+.register-message{display:none;padding:10px 12px;border:1px solid #ead9bf;border-radius:8px;background:#fff8ec;color:#6e5539;font-size:11px;line-height:1.5}
+.register-message.is-visible{display:block}
+.register-login{text-align:center;margin-top:19px;color:var(--muted);font-size:12px}
+.register-login button{border:0;background:none;cursor:pointer;font-size:inherit}
+.register-back{align-self:center;margin-top:18px;color:#8b887f;font-size:11px;transition:color .2s}
+.register-back:hover{color:var(--orange-dark)}.register-back i{margin-right:5px}
+@media(max-width:760px){.register-main{padding:32px 5% 50px}.register-layout{max-width:560px;grid-template-columns:1fr}.register-story{min-height:260px;padding:34px 32px}.register-story h1{margin:28px 0 10px;font-size:39px}.register-story>p{max-width:390px}.register-note{display:none}.register-book-art{right:26px;bottom:14px;font-size:90px}.register-panel{padding:36px 32px 40px}}
+@media(max-width:420px){.register-main{padding:20px 4% 36px}.register-layout{border-radius:14px}.register-story{min-height:220px;padding:27px 23px}.register-story h1{margin-top:24px;font-size:35px}.register-panel{padding:30px 22px 32px}.register-panel-heading h2{font-size:30px}.register-form{gap:13px}}
+
 @media(max-width:768px){
 	.top-bar{padding:0 5%;font-size:10px}
 	.top-bar-contact{gap:10px}

@@ -126,10 +126,44 @@ document.getElementById("editProfileButton")?.addEventListener("click",()=>{name
 document.addEventListener("click",event=>{const button=event.target.closest("[data-remove-book]");if(!button)return;const id=Number(button.dataset.removeBook);writeLocalList(savedKey,readLocalList(savedKey).filter(savedId=>Number(savedId)!==id));renderProfile();});
 renderProfile();
 }
+function initBorrowedPage(){
+const requestList=document.getElementById("borrowRequestsList");
+if(!requestList)return;
+const requestsKey="bookin-borrow-requests";
+function renderBorrowed(){
+const requests=readLocalList(requestsKey).filter(request=>books.some(book=>book.id===Number(request.id)));
+const activeLoans=requests.filter(request=>request.type==="active"),pending=requests.filter(request=>request.type==="borrow"||request.type==="waitlist");
+document.getElementById("activeLoanCount").textContent=activeLoans.length;
+document.getElementById("pendingRequestCount").textContent=pending.length;
+document.getElementById("activeLoanLabel").textContent=`${activeLoans.length} cuốn`;
+document.getElementById("requestLabel").textContent=`${pending.length} yêu cầu`;
+document.getElementById("activeLoansList").innerHTML=activeLoans.map(request=>{
+const book=books.find(item=>item.id===Number(request.id));
+const dueDate=request.dueDate?new Date(request.dueDate):null;
+return `<article class="active-loan"><img src="${book.image}" alt="Bìa sách ${book.title}" loading="lazy"><div class="active-loan-info"><span class="loan-status"><i class="fa-solid fa-circle-check"></i> Đã xác nhận</span><h3>${book.title}</h3><p>${book.author}</p><small>${dueDate?`Hạn trả: ${dueDate.toLocaleDateString("vi-VN")}`:"Chưa có thông tin hạn trả"}</small></div><a href="book-detail.html?id=${book.id}" aria-label="Xem ${book.title}"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></article>`;
+}).join("");
+document.getElementById("activeLoansEmpty").classList.toggle("hidden",activeLoans.length>0);
+requestList.innerHTML=pending.slice().reverse().map(request=>{
+const book=books.find(item=>item.id===Number(request.id));
+const waiting=request.type==="waitlist";
+return `<article class="borrow-request"><div class="request-book-icon"><i class="fa-solid fa-book"></i></div><div class="request-book-info"><h3>${book.title}</h3><p>${book.author}</p><small>${request.date?`Gửi ngày ${new Date(request.date).toLocaleDateString("vi-VN")}`:"Yêu cầu đã lưu trên thiết bị"}</small></div><span class="request-status ${waiting?"waitlist":"pending"}"><i class="fa-solid ${waiting?"fa-clock":"fa-hourglass-half"}"></i> ${waiting?"Đang chờ sách":"Chờ xác nhận"}</span><button type="button" class="cancel-request" data-cancel-request="${request.id}" aria-label="Hủy yêu cầu ${book.title}" title="Hủy yêu cầu"><i class="fa-solid fa-xmark"></i></button></article>`;
+}).join("");
+document.getElementById("borrowRequestsEmpty").classList.toggle("hidden",pending.length>0);
+}
+requestList.addEventListener("click",event=>{
+const button=event.target.closest("[data-cancel-request]");if(!button)return;
+const id=Number(button.dataset.cancelRequest),requests=readLocalList(requestsKey);
+const index=requests.findIndex(request=>Number(request.id)===id&&(request.type==="borrow"||request.type==="waitlist"));
+if(index!==-1)requests.splice(index,1);
+writeLocalList(requestsKey,requests);renderBorrowed();
+});
+renderBorrowed();
+}
 document.addEventListener("DOMContentLoaded",()=>{
 const headerActions=document.querySelector(".header-actions");
 headerActions?.insertAdjacentHTML("afterbegin",'<a class="profile-header-link" href="profile.html" aria-label="Trang cá nhân" title="Trang cá nhân"><i class="fa-regular fa-user"></i></a>');
 initProfilePage();
+initBorrowedPage();
 document.querySelectorAll(".save-book").forEach(button=>{
 const id=Number(new URLSearchParams(location.search).get("id")),saved=readLocalList("bookin-saved-books").map(Number).includes(id);
 button.setAttribute("aria-pressed",String(saved));button.setAttribute("aria-label",saved?"Bỏ lưu sách":"Lưu sách");button.innerHTML=saved?'<i class="fa-solid fa-heart"></i>':'<i class="fa-regular fa-heart"></i>';

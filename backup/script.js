@@ -216,7 +216,21 @@ document.getElementById("savedBooksGrid").innerHTML=savedBooks.map(book=>`<div c
 document.getElementById("savedBooksEmpty").classList.toggle("hidden",savedBooks.length>0);
 document.getElementById("profileActivity").innerHTML=requests.length?requests.slice().reverse().slice(0,4).map(request=>{const book=books.find(item=>item.id===Number(request.id));if(!book)return "";const label=request.type==="waitlist"?"Đăng ký chờ":request.type==="cancelled"?"Đã hủy yêu cầu":request.type==="active"?"Đang mượn":"Yêu cầu mượn";return `<article class="activity-item"><span class="activity-icon"><i class="fa-solid fa-book-open"></i></span><div><strong>${book.title}</strong><small>${label} · ${new Date(request.date).toLocaleDateString("vi-VN")}</small></div></article>`;}).join(""):'<p class="activity-empty">Bạn chưa gửi yêu cầu mượn nào.</p>';
 }
-form.addEventListener("submit",event=>{event.preventDefault();if(!form.reportValidity())return;profile={name:nameInput.value.trim(),email:emailInput.value.trim()};localStorage.setItem(profileKey,JSON.stringify(profile));renderProfile();message.textContent="Thông tin hồ sơ đã được lưu trên thiết bị này.";message.classList.add("is-visible");});
+form.addEventListener("submit",event=>{
+event.preventDefault();if(!form.reportValidity())return;
+const nextProfile={name:nameInput.value.trim(),email:normalizeEmail(emailInput.value)},currentUserId=localStorage.getItem("bookin-current-user"),registeredUsers=readLocalList("bookin-registered-users"),currentUser=registeredUsers.find(user=>user.id===currentUserId);
+if(currentUser&&nextProfile.email!==normalizeEmail(currentUser.email)&&emailAlreadyRegistered(nextProfile.email)){
+message.textContent="Email này đã được dùng bởi tài khoản khác.";message.classList.add("is-visible");return;
+}
+if(currentUser){
+const previousEmail=normalizeEmail(currentUser.email);currentUser.name=nextProfile.name;currentUser.email=nextProfile.email;
+writeLocalList("bookin-registered-users",registeredUsers);
+const credentials=readLocalList("bookin-user-credentials");credentials.forEach(credential=>{if(normalizeEmail(credential.email)===previousEmail)credential.email=nextProfile.email;});
+writeLocalList("bookin-user-credentials",credentials);
+if(localStorage.getItem("bookin-remembered-email")===previousEmail)localStorage.setItem("bookin-remembered-email",nextProfile.email);
+}
+profile=nextProfile;localStorage.setItem(profileKey,JSON.stringify(profile));renderProfile();message.textContent="Thông tin hồ sơ đã được lưu trên thiết bị này.";message.classList.add("is-visible");
+});
 document.getElementById("editProfileButton")?.addEventListener("click",()=>{nameInput.focus();document.getElementById("profileEditPanel").scrollIntoView({behavior:"smooth",block:"center"});});
 logoutButton?.addEventListener("click",logoutUser);
 document.addEventListener("click",event=>{const button=event.target.closest("[data-remove-book]");if(!button)return;const id=Number(button.dataset.removeBook);writeLocalList(savedKey,readLocalList(savedKey).filter(savedId=>Number(savedId)!==id));renderProfile();});

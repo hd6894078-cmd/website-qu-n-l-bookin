@@ -114,12 +114,12 @@ document.getElementById("profileNameDisplay").textContent=name;
 document.getElementById("profileEmailDisplay").textContent=profile.email||"Thêm email của bạn";
 document.getElementById("profileAvatar").textContent=initials;
 const savedIds=readLocalList(savedKey).map(Number),savedBooks=books.filter(book=>savedIds.includes(book.id));
-const requests=readLocalList(requestsKey);
+const requests=readLocalList(requestsKey),openRequests=requests.filter(request=>request.type!=="cancelled"&&request.type!=="returned");
 document.getElementById("savedBookCount").textContent=savedBooks.length;
-document.getElementById("borrowRequestCount").textContent=requests.length;
+document.getElementById("borrowRequestCount").textContent=openRequests.length;
 document.getElementById("savedBooksGrid").innerHTML=savedBooks.map(book=>`<div class="profile-saved-item">${card(book)}<button type="button" class="remove-saved" data-remove-book="${book.id}" aria-label="Bỏ lưu ${book.title}"><i class="fa-solid fa-heart-crack"></i></button></div>`).join("");
 document.getElementById("savedBooksEmpty").classList.toggle("hidden",savedBooks.length>0);
-document.getElementById("profileActivity").innerHTML=requests.length?requests.slice().reverse().slice(0,4).map(request=>{const book=books.find(item=>item.id===Number(request.id));if(!book)return "";return `<article class="activity-item"><span class="activity-icon"><i class="fa-solid fa-book-open"></i></span><div><strong>${book.title}</strong><small>${request.type==="waitlist"?"Đăng ký chờ":"Yêu cầu mượn"} · ${new Date(request.date).toLocaleDateString("vi-VN")}</small></div></article>`;}).join(""):'<p class="activity-empty">Bạn chưa gửi yêu cầu mượn nào.</p>';
+document.getElementById("profileActivity").innerHTML=requests.length?requests.slice().reverse().slice(0,4).map(request=>{const book=books.find(item=>item.id===Number(request.id));if(!book)return "";const label=request.type==="waitlist"?"Đăng ký chờ":request.type==="cancelled"?"Đã hủy yêu cầu":request.type==="active"?"Đang mượn":"Yêu cầu mượn";return `<article class="activity-item"><span class="activity-icon"><i class="fa-solid fa-book-open"></i></span><div><strong>${book.title}</strong><small>${label} · ${new Date(request.date).toLocaleDateString("vi-VN")}</small></div></article>`;}).join(""):'<p class="activity-empty">Bạn chưa gửi yêu cầu mượn nào.</p>';
 }
 form.addEventListener("submit",event=>{event.preventDefault();if(!form.reportValidity())return;profile={name:nameInput.value.trim(),email:emailInput.value.trim()};localStorage.setItem(profileKey,JSON.stringify(profile));renderProfile();message.textContent="Thông tin hồ sơ đã được lưu trên thiết bị này.";message.classList.add("is-visible");});
 document.getElementById("editProfileButton")?.addEventListener("click",()=>{nameInput.focus();document.getElementById("profileEditPanel").scrollIntoView({behavior:"smooth",block:"center"});});
@@ -154,16 +154,45 @@ requestList.addEventListener("click",event=>{
 const button=event.target.closest("[data-cancel-request]");if(!button)return;
 const id=Number(button.dataset.cancelRequest),requests=readLocalList(requestsKey);
 const index=requests.findIndex(request=>Number(request.id)===id&&(request.type==="borrow"||request.type==="waitlist"));
-if(index!==-1)requests.splice(index,1);
+if(index!==-1)requests[index]={...requests[index],type:"cancelled",cancelledDate:new Date().toISOString()};
 writeLocalList(requestsKey,requests);renderBorrowed();
 });
 renderBorrowed();
+}
+function initBorrowHistoryPage(){
+const list=document.getElementById("historyList");if(!list)return;
+const requestsKey="bookin-borrow-requests",empty=document.getElementById("historyEmpty");
+let activeFilter="all";
+function classify(request){if(request.type==="active")return "active";if(request.type==="cancelled"||request.type==="returned")return "closed";return "pending";}
+function renderHistory(){
+const requests=readLocalList(requestsKey).filter(request=>books.some(book=>book.id===Number(request.id))).slice().sort((first,second)=>new Date(second.cancelledDate||second.returnedDate||second.date||0)-new Date(first.cancelledDate||first.returnedDate||first.date||0));
+const pending=requests.filter(request=>classify(request)==="pending").length,active=requests.filter(request=>classify(request)==="active").length,closed=requests.filter(request=>classify(request)==="closed").length;
+document.getElementById("historyTotal").textContent=requests.length;
+document.getElementById("historyPending").textContent=pending;
+document.getElementById("historyActive").textContent=active;
+document.getElementById("historyClosed").textContent=closed;
+const visible=activeFilter==="all"?requests:requests.filter(request=>classify(request)===activeFilter);
+list.innerHTML=visible.map(request=>{
+const book=books.find(item=>item.id===Number(request.id)),state=classify(request);
+const labels={pending:request.type==="waitlist"?"Đang chờ sách":"Chờ xác nhận",active:"Đang mượn",closed:request.type==="returned"?"Đã trả":"Đã hủy"};
+const icons={pending:request.type==="waitlist"?"fa-clock":"fa-hourglass-half",active:"fa-book-open",closed:request.type==="returned"?"fa-check":"fa-xmark"};
+const eventDate=request.cancelledDate||request.returnedDate||request.date;
+return `<article class="history-row"><div class="history-timeline"><span class="history-state-icon ${state}"><i class="fa-solid ${icons[state]}"></i></span></div><img class="history-cover" src="${book.image}" alt="Bìa sách ${book.title}" loading="lazy"><div class="history-book"><span class="history-category">${book.category}</span><h3>${book.title}</h3><p>${book.author}</p><small>${eventDate?new Date(eventDate).toLocaleString("vi-VN",{dateStyle:"medium",timeStyle:"short"}):"Không có ngày ghi nhận"}</small></div><span class="history-status ${state}"><i class="fa-solid ${icons[state]}"></i> ${labels[state]}</span><a class="history-detail" href="book-detail.html?id=${book.id}" aria-label="Xem chi tiết ${book.title}" title="Xem sách"><i class="fa-solid fa-arrow-up-right-from-square"></i></a></article>`;
+}).join("");
+if(requests.length&&visible.length===0){empty.querySelector("h3").textContent="Không có mục nào trong bộ lọc này";empty.querySelector("p").textContent="Chọn trạng thái khác để xem hoạt động của bạn.";}
+else if(!requests.length){empty.querySelector("h3").textContent="Chưa có hoạt động mượn sách";empty.querySelector("p").textContent="Các yêu cầu mượn, đăng ký chờ và trạng thái cập nhật sẽ được lưu lại tại đây.";}
+empty.classList.toggle("hidden",visible.length>0);
+list.classList.toggle("hidden",visible.length===0);
+}
+document.querySelectorAll("[data-history-filter]").forEach(button=>button.addEventListener("click",()=>{activeFilter=button.dataset.historyFilter;document.querySelectorAll("[data-history-filter]").forEach(filter=>filter.classList.toggle("is-active",filter===button));renderHistory();}));
+renderHistory();
 }
 document.addEventListener("DOMContentLoaded",()=>{
 const headerActions=document.querySelector(".header-actions");
 headerActions?.insertAdjacentHTML("afterbegin",'<a class="profile-header-link" href="profile.html" aria-label="Trang cá nhân" title="Trang cá nhân"><i class="fa-regular fa-user"></i></a>');
 initProfilePage();
 initBorrowedPage();
+initBorrowHistoryPage();
 document.querySelectorAll(".save-book").forEach(button=>{
 const id=Number(new URLSearchParams(location.search).get("id")),saved=readLocalList("bookin-saved-books").map(Number).includes(id);
 button.setAttribute("aria-pressed",String(saved));button.setAttribute("aria-label",saved?"Bỏ lưu sách":"Lưu sách");button.innerHTML=saved?'<i class="fa-solid fa-heart"></i>':'<i class="fa-regular fa-heart"></i>';

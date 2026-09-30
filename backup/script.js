@@ -367,12 +367,26 @@ function initBookDetail(){const el=document.getElementById("bookDetail"),id=Numb
 function borrowBook(id){
 const book=books.find(item=>item.id===Number(id));if(!book)return;
 const userId=localStorage.getItem("bookin-current-user");
-if(!userId){alert("Vui lòng đăng nhập để gửi yêu cầu mượn sách.");location.href=`login.html?returnTo=${encodeURIComponent(`book-detail.html?id=${book.id}`)}`;return;}
-const type=book.status==="available"?"borrow":"waitlist",requests=readLocalList("bookin-borrow-requests");
-const existing=requests.find(request=>request.userId===userId&&Number(request.id)===book.id&&["borrow","waitlist","active"].includes(request.type));
-if(existing){alert(existing.type==="active"?`Bạn đang mượn "${book.title}".`:`Bạn đã có yêu cầu cho "${book.title}".`);location.href="borrowed.html";return;}
-requests.push({id:book.id,userId,type,date:new Date().toISOString()});
-writeLocalList("bookin-borrow-requests",requests);
-alert(type==="borrow"?`Đã gửi yêu cầu mượn "${book.title}". Theo dõi trạng thái trong mục Sách đang mượn.`:`"${book.title}" hiện đang được mượn. Bạn đã được thêm vào danh sách chờ.`);
-location.href="borrowed.html";
+document.querySelector(".borrow-dialog")?.remove();
+const type=book.status==="available"?"borrow":"waitlist",isAvailable=type==="borrow";
+const existing=userId?currentUserBorrowRequests().find(request=>Number(request.id)===book.id&&["borrow","waitlist","active"].includes(request.type)):null;
+const dialog=document.createElement("dialog");dialog.className="borrow-dialog";dialog.setAttribute("aria-labelledby","borrowDialogTitle");
+let content="";
+if(!userId){content=`<p class="borrow-dialog-copy">Đăng nhập để kiểm tra và gửi yêu cầu mượn cuốn sách này.</p><div class="borrow-dialog-actions"><button class="borrow-dialog-cancel" type="button">Để sau</button><a class="borrow-dialog-confirm" href="login.html?returnTo=${encodeURIComponent(`book-detail.html?id=${book.id}`)}">Đăng nhập</a></div>`;}
+else if(existing){const text=existing.type==="active"?"Bạn đang mượn cuốn sách này.":"Bạn đã có yêu cầu cho cuốn sách này.";content=`<p class="borrow-dialog-copy">${text}</p><div class="borrow-dialog-actions"><button class="borrow-dialog-cancel" type="button">Đóng</button><a class="borrow-dialog-confirm" href="borrowed.html">Xem yêu cầu</a></div>`;}
+else{content=`<p class="borrow-dialog-copy">${isAvailable?"Sách hiện còn sẵn. Sau khi xác nhận, yêu cầu sẽ được gửi tới thư viện để xử lý.":"Sách hiện đang được mượn. Bạn có thể đăng ký chờ để nhận thông báo khi sách sẵn sàng."}</p><div class="borrow-check-row"><i class="fa-solid ${isAvailable?"fa-circle-check":"fa-clock"}"></i><span>${isAvailable?"Tình trạng: Còn sách":"Tình trạng: Đang được mượn"}</span></div><div class="borrow-dialog-actions"><button class="borrow-dialog-cancel" type="button">Hủy</button><button class="borrow-dialog-confirm borrow-confirm" type="button">${isAvailable?"Xác nhận mượn":"Đăng ký chờ"}</button></div>`;}
+dialog.innerHTML=`<div class="borrow-dialog-panel"><button class="borrow-dialog-x" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button><span class="borrow-dialog-kicker">BOOKIN READING CLUB</span><h2 id="borrowDialogTitle">${isAvailable?"Kiểm tra trước khi mượn":"Đăng ký chờ sách"}</h2><div class="borrow-dialog-book"><img src="${book.image}" alt="Bìa sách ${book.title}"><div><strong>${book.title}</strong><span>${book.author}</span><small>${book.category}</small></div></div>${content}</div>`;
+document.body.append(dialog);
+const closeDialog=()=>dialog.close();
+dialog.querySelectorAll(".borrow-dialog-cancel,.borrow-dialog-x").forEach(button=>button.addEventListener("click",closeDialog));
+dialog.addEventListener("click",event=>{if(event.target===dialog)closeDialog();});
+dialog.querySelector(".borrow-confirm")?.addEventListener("click",()=>{
+const activeUserId=localStorage.getItem("bookin-current-user");
+if(!activeUserId){closeDialog();location.href=`login.html?returnTo=${encodeURIComponent(`book-detail.html?id=${book.id}`)}`;return;}
+const requests=readLocalList("bookin-borrow-requests"),alreadyRequested=requests.some(request=>request.userId===activeUserId&&Number(request.id)===book.id&&["borrow","waitlist","active"].includes(request.type));
+if(alreadyRequested){closeDialog();location.href="borrowed.html";return;}
+requests.push({id:book.id,userId:activeUserId,type,date:new Date().toISOString()});
+writeLocalList("bookin-borrow-requests",requests);closeDialog();location.href="borrowed.html";
+});
+dialog.showModal();
 }

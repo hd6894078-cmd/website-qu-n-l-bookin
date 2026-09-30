@@ -31,6 +31,14 @@ const books = [
 {id:30,title:"The Pragmatic Programmer",author:"David Thomas",category:"Công nghệ",rating:4.9,status:"available",year:1999,publisher:"Addison-Wesley",pages:352,description:"Những nguyên tắc bền vững giúp lập trình viên viết phần mềm tốt hơn và phát triển nghề nghiệp lâu dài.",cover:"cover-two",image:"https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=700&q=85"}
 ];
 
+const users = [
+{id:"USR-001",name:"Nguyễn Minh Anh",email:"minh.anh@example.com",role:"reader",status:"active",membership:"Thành viên",joinedAt:"2025-11-12",favoriteCategories:["Văn học","Kỹ năng sống"],savedBookIds:[2,6,14],loans:[{bookId:3,status:"active",borrowedAt:"2026-09-18",dueAt:"2026-10-02"},{bookId:15,status:"returned",borrowedAt:"2026-08-10",returnedAt:"2026-08-24"}]},
+{id:"USR-002",name:"Trần Quốc Bảo",email:"quoc.bao@example.com",role:"reader",status:"active",membership:"Thành viên thân thiết",joinedAt:"2025-08-04",favoriteCategories:["Công nghệ","Khoa học"],savedBookIds:[5,10,30],loans:[{bookId:11,status:"active",borrowedAt:"2026-09-22",dueAt:"2026-10-06"}]},
+{id:"USR-003",name:"Lê Thu Hà",email:"thu.ha@example.com",role:"reader",status:"active",membership:"Thành viên",joinedAt:"2026-01-19",favoriteCategories:["Tâm lý","Nghệ thuật"],savedBookIds:[9,12,26],loans:[{bookId:23,status:"pending",requestedAt:"2026-09-25"},{bookId:20,status:"returned",borrowedAt:"2026-07-02",returnedAt:"2026-07-16"}]},
+{id:"USR-004",name:"Phạm Gia Huy",email:"gia.huy@example.com",role:"reader",status:"active",membership:"Thành viên mới",joinedAt:"2026-09-03",favoriteCategories:["Lịch sử","Du ký"],savedBookIds:[16,18,25],loans:[]},
+{id:"USR-005",name:"Đỗ Ngọc Lan",email:"ngoc.lan@example.com",role:"reader",status:"inactive",membership:"Thành viên",joinedAt:"2025-04-27",favoriteCategories:["Thiếu nhi","Văn học"],savedBookIds:[13,17,21],loans:[{bookId:29,status:"returned",borrowedAt:"2026-06-11",returnedAt:"2026-06-26"}]}
+];
+
 const normalize=(value="")=>value.toLowerCase().replace(/đ/g,"d").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
 function header(){
 return `<div class="top-bar"><div><i class="fa-solid fa-book-open"></i> Không gian dành cho những người yêu sách</div><div class="top-bar-contact"><span><i class="fa-solid fa-clock"></i> Mở cửa mỗi ngày 8:00 - 21:00</span><span><i class="fa-solid fa-phone"></i> 0123 456 789</span></div></div>

@@ -56,8 +56,11 @@ if(!accountButton)return;
 accountButton.setAttribute("onclick","location.href='profile.html'");
 accountButton.setAttribute("aria-label","Trang cá nhân");
 const label=accountButton.querySelector("span");if(label)label.textContent="Tài khoản";
+accountButton.insertAdjacentHTML("afterend",'<button class="header-logout" type="button" aria-label="Đăng xuất" title="Đăng xuất"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></button>');
+document.querySelector(".header-logout")?.addEventListener("click",logoutUser);
 }
 document.addEventListener("DOMContentLoaded",initAccountHeader);
+function logoutUser(){localStorage.removeItem("bookin-current-user");localStorage.removeItem("bookin-profile");location.href="index.html";}
 function normalizeEmail(email){return email.trim().toLowerCase();}
 function emailAlreadyRegistered(email){
 const normalizedEmail=normalizeEmail(email),registeredUsers=readLocalList("bookin-registered-users"),credentials=readLocalList("bookin-user-credentials");
@@ -215,7 +218,7 @@ document.getElementById("profileActivity").innerHTML=requests.length?requests.sl
 }
 form.addEventListener("submit",event=>{event.preventDefault();if(!form.reportValidity())return;profile={name:nameInput.value.trim(),email:emailInput.value.trim()};localStorage.setItem(profileKey,JSON.stringify(profile));renderProfile();message.textContent="Thông tin hồ sơ đã được lưu trên thiết bị này.";message.classList.add("is-visible");});
 document.getElementById("editProfileButton")?.addEventListener("click",()=>{nameInput.focus();document.getElementById("profileEditPanel").scrollIntoView({behavior:"smooth",block:"center"});});
-logoutButton?.addEventListener("click",()=>{localStorage.removeItem("bookin-current-user");localStorage.removeItem("bookin-profile");location.href="index.html";});
+logoutButton?.addEventListener("click",logoutUser);
 document.addEventListener("click",event=>{const button=event.target.closest("[data-remove-book]");if(!button)return;const id=Number(button.dataset.removeBook);writeLocalList(savedKey,readLocalList(savedKey).filter(savedId=>Number(savedId)!==id));renderProfile();});
 renderProfile();
 }

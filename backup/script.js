@@ -30,6 +30,8 @@ const books = [
 {id:29,title:"Into the Wild",author:"Jon Krakauer",category:"Du ký",rating:4.6,status:"borrowed",year:1996,publisher:"Villard Books",pages:240,description:"Hành trình phiêu lưu có thật đặt ra những câu hỏi về tự do, thiên nhiên và giới hạn của con người.",cover:"cover-four",image:"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=700&q=85"},
 {id:30,title:"The Pragmatic Programmer",author:"David Thomas",category:"Công nghệ",rating:4.9,status:"available",year:1999,publisher:"Addison-Wesley",pages:352,description:"Những nguyên tắc bền vững giúp lập trình viên viết phần mềm tốt hơn và phát triển nghề nghiệp lâu dài.",cover:"cover-two",image:"https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=700&q=85"}
 ];
+const deletedBookIds=new Set(readLocalList("bookin-admin-deleted-books").map(Number));
+for(let bookIndex=books.length-1;bookIndex>=0;bookIndex--){if(deletedBookIds.has(books[bookIndex].id))books.splice(bookIndex,1);}
 readLocalList("bookin-admin-book-overrides").forEach(savedBook=>{
 const index=books.findIndex(book=>book.id===Number(savedBook.id));
 if(index===-1)books.push(savedBook);else books[index]={...books[index],...savedBook};
@@ -453,7 +455,7 @@ addBookButton.hidden=activeTab!=="books";
 function renderBooks(){
 const query=normalize(searchInput.value),status=statusFilter.value;
 const filtered=books.filter(book=>(!query||normalize(`${book.title} ${book.author} ${book.category}`).includes(query))&&(status==="all"||book.status===status));
-return `<table><thead><tr><th>Đầu sách</th><th>Thể loại</th><th>Năm</th><th>Đánh giá</th><th>Tình trạng</th><th>Thao tác</th></tr></thead><tbody>${filtered.map(book=>`<tr><td><div class="admin-book-cell"><img src="${book.image}" alt="" loading="lazy"><div><strong>${escapeHTML(book.title)}</strong><small>${escapeHTML(book.author)}</small></div></div></td><td>${escapeHTML(book.category)}</td><td>${book.year}</td><td><span class="admin-rating"><i class="fa-solid fa-star"></i> ${book.rating}</span></td><td><span class="admin-status ${book.status}">${book.status==="available"?"Còn sách":"Đang mượn"}</span></td><td><button class="admin-action edit-book" type="button" data-book-action="edit" data-book-id="${book.id}"><i class="fa-solid fa-pen"></i> Sửa</button></td></tr>`).join("")}</tbody></table>`;
+return `<table><thead><tr><th>Đầu sách</th><th>Thể loại</th><th>Năm</th><th>Đánh giá</th><th>Tình trạng</th><th>Thao tác</th></tr></thead><tbody>${filtered.map(book=>`<tr><td><div class="admin-book-cell"><img src="${book.image}" alt="" loading="lazy"><div><strong>${escapeHTML(book.title)}</strong><small>${escapeHTML(book.author)}</small></div></div></td><td>${escapeHTML(book.category)}</td><td>${book.year}</td><td><span class="admin-rating"><i class="fa-solid fa-star"></i> ${book.rating}</span></td><td><span class="admin-status ${book.status}">${book.status==="available"?"Còn sách":"Đang mượn"}</span></td><td><div class="admin-book-actions"><button class="admin-action edit-book" type="button" data-book-action="edit" data-book-id="${book.id}"><i class="fa-solid fa-pen"></i> Sửa</button><button class="admin-action delete-book" type="button" data-book-action="delete" data-book-id="${book.id}"><i class="fa-solid fa-trash-can"></i> Xóa</button></div></td></tr>`).join("")}</tbody></table>`;
 }
 function renderReaders(){
 const query=normalize(searchInput.value),status=statusFilter.value;
@@ -487,6 +489,19 @@ appendBorrowEvent({userId:request.userId,entryId:request.entryId,bookId:book.id,
 }
 writeLocalList("bookin-borrow-requests",requests);renderAdmin();
 }
+function deleteBook(bookId){
+const book=books.find(item=>item.id===Number(bookId));if(!book)return;
+const hasTransactions=readLocalList("bookin-borrow-requests").some(request=>Number(request.id)===book.id)||readLocalList("bookin-borrow-events").some(event=>Number(event.bookId)===book.id);
+if(hasTransactions){alert("Không thể xóa sách đã có lịch sử mượn/trả. Hãy giữ sách trong kho để bảo toàn lịch sử.");return;}
+if(!confirm(`Xóa “${book.title}” khỏi kho sách?`))return;
+const index=books.findIndex(item=>item.id===book.id);if(index!==-1)books.splice(index,1);
+writeLocalList("bookin-admin-book-overrides",readLocalList("bookin-admin-book-overrides").filter(item=>Number(item.id)!==book.id));
+const deletedIds=new Set(readLocalList("bookin-admin-deleted-books").map(Number));deletedIds.add(book.id);writeLocalList("bookin-admin-deleted-books",[...deletedIds]);
+writeLocalList("bookin-saved-books",readLocalList("bookin-saved-books").filter(savedId=>Number(savedId)!==book.id));
+const registeredUsers=readLocalList("bookin-registered-users");registeredUsers.forEach(user=>{user.savedBookIds=(user.savedBookIds||[]).filter(savedId=>Number(savedId)!==book.id);});writeLocalList("bookin-registered-users",registeredUsers);
+users.forEach(user=>{user.savedBookIds=(user.savedBookIds||[]).filter(savedId=>Number(savedId)!==book.id);});
+renderAdmin();
+}
 const categorySelect=document.getElementById("adminBookCategory");
 [...new Set(books.map(book=>book.category))].sort().forEach(category=>categorySelect.insertAdjacentHTML("beforeend",`<option value="${escapeHTML(category)}">${escapeHTML(category)}</option>`));
 function openBookDialog(book=null){
@@ -519,7 +534,7 @@ writeLocalList("bookin-admin-book-overrides",overrides);
 bookDialog.close();renderAdmin();
 });
 bookDialog.querySelector(".admin-book-form")?.addEventListener("input",()=>{bookFormMessage.textContent="";});
-tableWrap.addEventListener("click",event=>{const button=event.target.closest('[data-book-action="edit"]');if(button){openBookDialog(books.find(book=>book.id===Number(button.dataset.bookId)));return;}const loanButton=event.target.closest("[data-loan-action]");if(loanButton)updateRequest(loanButton.dataset.entryId,loanButton.dataset.loanAction);});
+tableWrap.addEventListener("click",event=>{const bookButton=event.target.closest("[data-book-action]");if(bookButton){if(bookButton.dataset.bookAction==="edit")openBookDialog(books.find(book=>book.id===Number(bookButton.dataset.bookId)));else if(bookButton.dataset.bookAction==="delete")deleteBook(bookButton.dataset.bookId);return;}const loanButton=event.target.closest("[data-loan-action]");if(loanButton)updateRequest(loanButton.dataset.entryId,loanButton.dataset.loanAction);});
 document.querySelectorAll("[data-admin-tab]").forEach(button=>button.addEventListener("click",()=>{activeTab=button.dataset.adminTab;document.querySelectorAll("[data-admin-tab]").forEach(tab=>{const selected=tab===button;tab.classList.toggle("is-active",selected);tab.setAttribute("aria-selected",String(selected));});searchInput.value="";updateStatusOptions();renderAdmin();}));
 searchInput.addEventListener("input",renderAdmin);statusFilter.addEventListener("change",renderAdmin);document.getElementById("adminRefresh")?.addEventListener("click",renderAdmin);
 updateStatusOptions();renderAdmin();

@@ -450,6 +450,9 @@ document.getElementById("adminUserNote").textContent=`${readers.filter(user=>use
 function updateStatusOptions(){
 const options={loans:[["all","Tất cả trạng thái"],["borrow","Chờ xác nhận"],["waitlist","Đăng ký chờ"],["active","Đang mượn"],["returned","Đã trả"],["cancelled","Đã hủy"]],books:[["all","Tất cả tình trạng"],["available","Còn sách"],["borrowed","Đang mượn"]],users:[["all","Tất cả trạng thái"],["active","Đang hoạt động"],["inactive","Ngừng hoạt động"]]};
 statusFilter.innerHTML=options[activeTab].map(([value,label])=>`<option value="${value}">${label}</option>`).join("");
+const searchHints={loans:"Tìm theo sách, người đọc, email...",books:"Tìm tên sách, tác giả, thể loại...",users:"Tìm theo tên, email, mã thành viên..."};
+searchInput.placeholder=searchHints[activeTab];
+searchInput.setAttribute("aria-label",searchHints[activeTab]);
 addBookButton.hidden=activeTab!=="books";
 }
 function renderBooks(){
@@ -472,8 +475,10 @@ return `<table><thead><tr><th>Người đọc</th><th>Sách</th><th>Yêu cầu</
 function renderAdmin(){
 updateStats();
 tableWrap.innerHTML=activeTab==="books"?renderBooks():activeTab==="users"?renderReaders():renderLoans();
-empty.classList.toggle("hidden",Boolean(tableWrap.querySelector("tbody tr")));
-tableWrap.classList.toggle("hidden",!tableWrap.querySelector("tbody tr"));
+const resultCount=tableWrap.querySelectorAll("tbody tr").length,labels={books:"đầu sách",users:"người đọc",loans:"giao dịch"};
+document.getElementById("adminResultCount").textContent=`${resultCount} ${labels[activeTab]}`;
+empty.classList.toggle("hidden",resultCount>0);
+tableWrap.classList.toggle("hidden",resultCount===0);
 }
 function updateRequest(entryId,action){
 const requests=readLocalList("bookin-borrow-requests"),index=requests.findIndex(request=>(request.entryId||`${request.userId}-${request.id}-${request.date}`)===entryId);if(index===-1)return;

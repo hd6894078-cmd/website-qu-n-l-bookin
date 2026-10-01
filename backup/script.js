@@ -38,6 +38,7 @@ if(index===-1)books.push(savedBook);else books[index]={...books[index],...savedB
 });
 
 const users = [
+{id:"USR-000",name:"Quản trị viên",email:"admin@bookin.vn",role:"admin",status:"active",membership:"Quản trị viên",joinedAt:"2025-01-01",favoriteCategories:[],savedBookIds:[],loans:[]},
 {id:"USR-001",name:"Nguyễn Minh Anh",email:"minh.anh@example.com",role:"reader",status:"active",membership:"Thành viên",joinedAt:"2025-11-12",favoriteCategories:["Văn học","Kỹ năng sống"],savedBookIds:[2,6,14],loans:[{bookId:3,status:"active",borrowedAt:"2026-09-18",dueAt:"2026-10-02"},{bookId:15,status:"returned",borrowedAt:"2026-08-10",returnedAt:"2026-08-24"}]},
 {id:"USR-002",name:"Trần Quốc Bảo",email:"quoc.bao@example.com",role:"reader",status:"active",membership:"Thành viên thân thiết",joinedAt:"2025-08-04",favoriteCategories:["Công nghệ","Khoa học"],savedBookIds:[5,10,30],loans:[{bookId:11,status:"active",borrowedAt:"2026-09-22",dueAt:"2026-10-06"}]},
 {id:"USR-003",name:"Lê Thu Hà",email:"thu.ha@example.com",role:"reader",status:"active",membership:"Thành viên",joinedAt:"2026-01-19",favoriteCategories:["Tâm lý","Nghệ thuật"],savedBookIds:[9,12,26],loans:[{bookId:23,status:"pending",requestedAt:"2026-09-25"},{bookId:20,status:"returned",borrowedAt:"2026-07-02",returnedAt:"2026-07-16"}]},
@@ -55,13 +56,29 @@ return `<footer id="contact"><div class="footer-main"><div class="footer-brand">
 }
 document.addEventListener("DOMContentLoaded",()=>{document.getElementById("site-header")?.insertAdjacentHTML("afterbegin",header());document.getElementById("site-footer")?.insertAdjacentHTML("afterbegin",footer());const toggle=document.querySelector(".menu-toggle"),menu=document.querySelector(".mobile-menu");toggle?.addEventListener("click",()=>{const open=menu.classList.toggle("is-open");toggle.setAttribute("aria-expanded",open);toggle.innerHTML=open?'<i class="fa-solid fa-xmark"></i>':'<i class="fa-solid fa-bars"></i>';});document.querySelectorAll(".main-nav a, .mobile-menu a").forEach(link=>{if(link.pathname===location.pathname&&!link.hash)link.classList.add("active");});const headerInput=document.getElementById("headerSearchInput");if(headerInput){const submitHeaderSearch=()=>{const value=normalize(headerInput.value);if(value){location.href=`books.html?search=${encodeURIComponent(value)}`;}else{location.href="books.html";}};headerInput.addEventListener("keydown",(event)=>{if(event.key==="Enter"){event.preventDefault();submitHeaderSearch();}});document.querySelector(".header-search-btn")?.addEventListener("click",submitHeaderSearch);}
 if(document.getElementById("featuredBooks"))renderFeaturedBooks();if(document.getElementById("bookList"))initLibraryPage();if(document.getElementById("bookDetail"))initBookDetail();});
+function getLoggedInUser(){
+const userId=localStorage.getItem("bookin-current-user"),registered=readLocalList("bookin-registered-users"),allUsers=[...registered,...users];
+if(userId){const found=allUsers.find(user=>user.id===userId||normalizeEmail(user.email)===normalizeEmail(userId));if(found)return found;}
+const profileRaw=localStorage.getItem("bookin-profile");
+if(profileRaw){try{const profile=JSON.parse(profileRaw);if(profile?.email){const found=allUsers.find(user=>normalizeEmail(user.email)===normalizeEmail(profile.email));if(found)return found;}}catch{}}
+return null;
+}
+function isAdminUser(){
+const user=getLoggedInUser();
+if(!user)return false;
+return user.role==="admin"||normalizeEmail(user.email)==="admin@bookin.vn"||normalizeEmail(user.email).startsWith("admin@");
+}
 function initAccountHeader(){
-if(!localStorage.getItem("bookin-current-user"))return;
+const user=getLoggedInUser();
+if(!user)return;
 const accountButton=document.querySelector(".login-btn");
 if(!accountButton)return;
 accountButton.setAttribute("onclick","location.href='profile.html'");
 accountButton.setAttribute("aria-label","Trang cá nhân");
-const label=accountButton.querySelector("span");if(label)label.textContent="Tài khoản";
+const label=accountButton.querySelector("span");if(label)label.textContent=isAdminUser()?"Admin":"Tài khoản";
+if(isAdminUser()&&!document.querySelector(".admin-header-link")){
+accountButton.insertAdjacentHTML("beforebegin",'<a class="admin-header-link" href="admin.html" aria-label="Quản trị" title="Trang quản trị" style="margin-right:6px;color:var(--orange-dark);font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:4px;"><i class="fa-solid fa-shield-halved"></i> <span>Quản trị</span></a>');
+}
 accountButton.insertAdjacentHTML("afterend",'<button class="header-logout" type="button" aria-label="Đăng xuất" title="Đăng xuất"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i></button>');
 document.querySelector(".header-logout")?.addEventListener("click",logoutUser);
 }
@@ -208,7 +225,17 @@ event.preventDefault();
 if(loginInProgress)return;
 validateLoginEmail();validateLoginPassword();
 if(!form.reportValidity())return;
-const email=normalizeEmail(emailInput.value),credential=readLocalList("bookin-user-credentials").find(item=>item.email===email),user=readLocalList("bookin-registered-users").find(item=>normalizeEmail(item.email)===email);
+const email=normalizeEmail(emailInput.value);
+if((email==="admin@bookin.vn"||email==="admin")&&password.value.trim().length>0){
+const adminUser={id:"USR-000",name:"Quản trị viên",email:"admin@bookin.vn",role:"admin",status:"active",membership:"Quản trị viên"};
+localStorage.setItem("bookin-profile",JSON.stringify({name:adminUser.name,email:adminUser.email}));
+localStorage.setItem("bookin-current-user",adminUser.id);
+const returnTo=new URLSearchParams(location.search).get("returnTo"),destination=returnTo||"admin.html";
+message.innerHTML=`Đăng nhập thành công với quyền Admin. <a href="${destination}">Chuyển tới trang Quản trị</a>.`;
+message.classList.add("is-visible");
+setTimeout(()=>location.href=destination,500);return;
+}
+const credential=readLocalList("bookin-user-credentials").find(item=>item.email===email),user=readLocalList("bookin-registered-users").find(item=>normalizeEmail(item.email)===email);
 if(!credential||!user||user.status!=="active"){
 message.textContent="Email hoặc mật khẩu chưa đúng. Tài khoản mẫu chưa thể đăng nhập.";
 message.classList.add("is-visible");return;
@@ -480,6 +507,21 @@ renderHistory();
 }
 function initAdminPage(){
 const tableWrap=document.getElementById("adminTableWrap");if(!tableWrap)return;
+const adminMain=document.querySelector(".admin-main");
+if(!isAdminUser()){
+if(adminMain){
+adminMain.innerHTML=`<section class="admin-unauthorized"><div class="admin-unauthorized-card"><div class="admin-unauthorized-badge"><i class="fa-solid fa-user-lock"></i></div><h2>Yêu cầu quyền Quản trị viên</h2><p>Trang này chỉ dành cho tài khoản có quyền <strong>Quản trị (Admin)</strong>. Bạn hiện chưa đăng nhập bằng tài khoản Admin.</p><div class="admin-demo-account-hint"><span><i class="fa-solid fa-key"></i> Tài khoản Admin mẫu: <strong>admin@bookin.vn</strong></span></div><div class="admin-unauthorized-actions"><a href="index.html" class="secondary-btn"><i class="fa-solid fa-house"></i> Về trang chủ</a><button type="button" id="adminQuickLoginBtn" class="primary-btn"><i class="fa-solid fa-shield-halved"></i> Đăng nhập Admin mẫu</button></div></div></section>`;
+document.getElementById("adminQuickLoginBtn")?.addEventListener("click",()=>{
+const adminUser={id:"USR-000",name:"Quản trị viên",email:"admin@bookin.vn",role:"admin",status:"active",membership:"Quản trị viên"};
+localStorage.setItem("bookin-profile",JSON.stringify({name:adminUser.name,email:adminUser.email}));
+localStorage.setItem("bookin-current-user",adminUser.id);
+location.reload();
+});
+}
+return;
+}
+const eyebrow=document.querySelector(".admin-eyebrow");
+if(eyebrow)eyebrow.innerHTML='<i class="fa-solid fa-shield-halved"></i> BOOKIN · ĐIỀU HÀNH (ĐÃ XÁC THỰC ADMIN)';
 const searchInput=document.getElementById("adminSearch"),statusFilter=document.getElementById("adminStatusFilter"),empty=document.getElementById("adminEmpty");
 const addBookButton=document.getElementById("adminAddBook"),bookDialog=document.getElementById("adminBookDialog"),bookForm=document.getElementById("adminBookForm"),bookFormMessage=document.getElementById("adminBookFormMessage");
 let activeTab="loans";

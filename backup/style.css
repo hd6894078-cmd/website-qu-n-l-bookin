@@ -146,6 +146,18 @@ header:after{content:'';position:absolute;left:7%;right:7%;bottom:0;height:1px;b
 .user-request-status{margin-top:10px;font-size:10px}
 .borrowed-detail-action{white-space:nowrap}
 .return-loan{min-height:34px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border:1px solid #ead6d0;border-radius:8px;background:#fff;color:#a45448;font-size:10px;font-weight:700;white-space:nowrap;cursor:pointer}.return-loan:hover{background:#fff1ed;border-color:#d9aea5}.return-loan:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.active-loans-list{grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px}
+.active-loan{display:grid;grid-template-columns:72px minmax(0,1fr);grid-template-rows:1fr auto;align-items:start;column-gap:14px;row-gap:12px;min-height:154px;padding:15px;border-color:#e5e8df;border-radius:12px;background:linear-gradient(135deg,#fff 0%,#fcfcf8 100%);box-shadow:0 5px 16px rgba(39,35,28,.035)}
+.active-loan>img{grid-column:1;grid-row:1/3;width:72px;height:98px;object-fit:cover;border-radius:5px;box-shadow:0 5px 14px rgba(39,35,28,.13)}
+.active-loan-info{grid-column:2;grid-row:1;min-width:0;padding-right:26px}
+.active-loan-info h3{margin:7px 0 2px;font-family:'Playfair Display',serif;font-size:16px;line-height:1.25;white-space:normal}
+.active-loan-info p{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.active-loan-info small{margin-top:6px;font-size:10px}
+.active-loan>a{grid-column:2;grid-row:1;justify-self:end;padding:4px}
+.return-loan{grid-column:2;grid-row:2;justify-self:start}
+.loan-due-indicator{width:max-content;max-width:100%;display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:4px 8px;border-radius:999px;background:#edf4ee;color:#3d7651;font-size:9px;font-weight:700}
+.loan-due-indicator.soon{background:#fff3e6;color:#a66a24}.loan-due-indicator.overdue{background:#faece9;color:#a54f43}.loan-due-indicator.unknown{background:#f3f1ec;color:#77736b}
+@media(max-width:560px){.active-loans-list{grid-template-columns:1fr}.active-loan{grid-template-columns:60px minmax(0,1fr);min-height:140px;padding:12px;column-gap:12px}.active-loan>img{width:60px;height:84px}}
 
 .history-page{background:#f7f5ef}
 .history-main{max-width:1120px;min-height:70vh;margin:0 auto;padding:54px 5% 88px}

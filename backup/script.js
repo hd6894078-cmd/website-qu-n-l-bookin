@@ -296,7 +296,12 @@ document.getElementById("requestLabel").textContent=`${pending.length} yêu cầ
 document.getElementById("activeLoansList").innerHTML=activeLoans.map(request=>{
 const book=books.find(item=>item.id===Number(request.id));
 const dueDate=request.dueDate?new Date(request.dueDate):null;
-return `<article class="active-loan"><img src="${book.image}" alt="Bìa sách ${book.title}" loading="lazy"><div class="active-loan-info"><span class="loan-status"><i class="fa-solid fa-circle-check"></i> Đang mượn</span><h3>${book.title}</h3><p>${book.author}</p><small>${dueDate?`Hạn trả dự kiến: ${dueDate.toLocaleDateString("vi-VN")}`:"Chưa có thông tin hạn trả"}</small></div><a href="book-detail.html?id=${book.id}" aria-label="Xem ${book.title}"><i class="fa-solid fa-arrow-up-right-from-square"></i></a><button type="button" class="return-loan" data-return-loan="${book.id}"><i class="fa-solid fa-arrow-rotate-left"></i> Trả sách</button></article>`;
+const today=new Date();today.setHours(0,0,0,0);
+const dueDay=dueDate?new Date(dueDate):null;if(dueDay)dueDay.setHours(0,0,0,0);
+const daysLeft=dueDay?Math.ceil((dueDay-today)/86400000):null;
+const dueState=daysLeft===null?"unknown":daysLeft<0?"overdue":daysLeft<=2?"soon":"normal";
+const dueText=daysLeft===null?"Chưa có hạn trả":daysLeft<0?`Quá hạn ${Math.abs(daysLeft)} ngày`:daysLeft===0?"Hạn trả hôm nay":`Còn ${daysLeft} ngày`;
+return `<article class="active-loan"><img src="${book.image}" alt="Bìa sách ${book.title}" loading="lazy"><div class="active-loan-info"><span class="loan-status"><i class="fa-solid fa-circle-check"></i> Đang mượn</span><h3>${book.title}</h3><p>${book.author}</p><small>${dueDate?`Hạn trả dự kiến: ${dueDate.toLocaleDateString("vi-VN")}`:"Chưa có thông tin hạn trả"}</small><span class="loan-due-indicator ${dueState}"><i class="fa-regular fa-clock"></i> ${dueText}</span></div><a href="book-detail.html?id=${book.id}" aria-label="Xem ${book.title}" title="Xem sách"><i class="fa-solid fa-arrow-up-right-from-square"></i></a><button type="button" class="return-loan" data-return-loan="${book.id}"><i class="fa-solid fa-arrow-rotate-left"></i> Trả sách</button></article>`;
 }).join("");
 document.getElementById("activeLoansEmpty").classList.toggle("hidden",activeLoans.length>0);
 requestList.innerHTML=pending.slice().reverse().map(request=>{

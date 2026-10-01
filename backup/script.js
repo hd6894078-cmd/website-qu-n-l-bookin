@@ -30,6 +30,10 @@ const books = [
 {id:29,title:"Into the Wild",author:"Jon Krakauer",category:"Du ký",rating:4.6,status:"borrowed",year:1996,publisher:"Villard Books",pages:240,description:"Hành trình phiêu lưu có thật đặt ra những câu hỏi về tự do, thiên nhiên và giới hạn của con người.",cover:"cover-four",image:"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=700&q=85"},
 {id:30,title:"The Pragmatic Programmer",author:"David Thomas",category:"Công nghệ",rating:4.9,status:"available",year:1999,publisher:"Addison-Wesley",pages:352,description:"Những nguyên tắc bền vững giúp lập trình viên viết phần mềm tốt hơn và phát triển nghề nghiệp lâu dài.",cover:"cover-two",image:"https://images.unsplash.com/photo-1515879218367-8466d910aaa4?auto=format&fit=crop&w=700&q=85"}
 ];
+readLocalList("bookin-admin-book-overrides").forEach(savedBook=>{
+const index=books.findIndex(book=>book.id===Number(savedBook.id));
+if(index===-1)books.push(savedBook);else books[index]={...books[index],...savedBook};
+});
 
 const users = [
 {id:"USR-001",name:"Nguyễn Minh Anh",email:"minh.anh@example.com",role:"reader",status:"active",membership:"Thành viên",joinedAt:"2025-11-12",favoriteCategories:["Văn học","Kỹ năng sống"],savedBookIds:[2,6,14],loans:[{bookId:3,status:"active",borrowedAt:"2026-09-18",dueAt:"2026-10-02"},{bookId:15,status:"returned",borrowedAt:"2026-08-10",returnedAt:"2026-08-24"}]},
@@ -428,6 +432,7 @@ renderHistory();
 function initAdminPage(){
 const tableWrap=document.getElementById("adminTableWrap");if(!tableWrap)return;
 const searchInput=document.getElementById("adminSearch"),statusFilter=document.getElementById("adminStatusFilter"),empty=document.getElementById("adminEmpty");
+const addBookButton=document.getElementById("adminAddBook"),bookDialog=document.getElementById("adminBookDialog"),bookForm=document.getElementById("adminBookForm"),bookFormMessage=document.getElementById("adminBookFormMessage");
 let activeTab="loans";
 const escapeHTML=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]));
 const allReaders=()=>{const registered=readLocalList("bookin-registered-users"),emails=new Set(registered.map(user=>normalizeEmail(user.email)));return [...registered,...users.filter(user=>!emails.has(normalizeEmail(user.email)))];};
@@ -443,11 +448,12 @@ document.getElementById("adminUserNote").textContent=`${readers.filter(user=>use
 function updateStatusOptions(){
 const options={loans:[["all","Tất cả trạng thái"],["borrow","Chờ xác nhận"],["waitlist","Đăng ký chờ"],["active","Đang mượn"],["returned","Đã trả"],["cancelled","Đã hủy"]],books:[["all","Tất cả tình trạng"],["available","Còn sách"],["borrowed","Đang mượn"]],users:[["all","Tất cả trạng thái"],["active","Đang hoạt động"],["inactive","Ngừng hoạt động"]]};
 statusFilter.innerHTML=options[activeTab].map(([value,label])=>`<option value="${value}">${label}</option>`).join("");
+addBookButton.hidden=activeTab!=="books";
 }
 function renderBooks(){
 const query=normalize(searchInput.value),status=statusFilter.value;
 const filtered=books.filter(book=>(!query||normalize(`${book.title} ${book.author} ${book.category}`).includes(query))&&(status==="all"||book.status===status));
-return `<table><thead><tr><th>Đầu sách</th><th>Thể loại</th><th>Năm</th><th>Đánh giá</th><th>Tình trạng</th></tr></thead><tbody>${filtered.map(book=>`<tr><td><div class="admin-book-cell"><img src="${book.image}" alt="" loading="lazy"><div><strong>${escapeHTML(book.title)}</strong><small>${escapeHTML(book.author)}</small></div></div></td><td>${escapeHTML(book.category)}</td><td>${book.year}</td><td><span class="admin-rating"><i class="fa-solid fa-star"></i> ${book.rating}</span></td><td><span class="admin-status ${book.status}">${book.status==="available"?"Còn sách":"Đang mượn"}</span></td></tr>`).join("")}</tbody></table>`;
+return `<table><thead><tr><th>Đầu sách</th><th>Thể loại</th><th>Năm</th><th>Đánh giá</th><th>Tình trạng</th><th>Thao tác</th></tr></thead><tbody>${filtered.map(book=>`<tr><td><div class="admin-book-cell"><img src="${book.image}" alt="" loading="lazy"><div><strong>${escapeHTML(book.title)}</strong><small>${escapeHTML(book.author)}</small></div></div></td><td>${escapeHTML(book.category)}</td><td>${book.year}</td><td><span class="admin-rating"><i class="fa-solid fa-star"></i> ${book.rating}</span></td><td><span class="admin-status ${book.status}">${book.status==="available"?"Còn sách":"Đang mượn"}</span></td><td><button class="admin-action edit-book" type="button" data-book-action="edit" data-book-id="${book.id}"><i class="fa-solid fa-pen"></i> Sửa</button></td></tr>`).join("")}</tbody></table>`;
 }
 function renderReaders(){
 const query=normalize(searchInput.value),status=statusFilter.value;
@@ -481,9 +487,41 @@ appendBorrowEvent({userId:request.userId,entryId:request.entryId,bookId:book.id,
 }
 writeLocalList("bookin-borrow-requests",requests);renderAdmin();
 }
+const categorySelect=document.getElementById("adminBookCategory");
+[...new Set(books.map(book=>book.category))].sort().forEach(category=>categorySelect.insertAdjacentHTML("beforeend",`<option value="${escapeHTML(category)}">${escapeHTML(category)}</option>`));
+function openBookDialog(book=null){
+bookForm.reset();bookFormMessage.textContent="";
+bookForm.elements.id.value=book?.id||"";
+bookForm.elements.title.value=book?.title||"";
+bookForm.elements.author.value=book?.author||"";
+bookForm.elements.category.value=book?.category||"";
+bookForm.elements.year.value=book?.year||new Date().getFullYear();
+bookForm.elements.pages.value=book?.pages||1;
+bookForm.elements.rating.value=book?.rating||4.5;
+bookForm.elements.publisher.value=book?.publisher||"";
+bookForm.elements.status.value=book?.status||"available";
+bookForm.elements.image.value=book?.image||"";
+bookForm.elements.description.value=book?.description||"";
+document.getElementById("adminBookDialogTitle").textContent=book?"Cập nhật đầu sách":"Thêm đầu sách";
+bookDialog.showModal();
+}
+addBookButton.addEventListener("click",()=>openBookDialog());
+bookDialog.querySelectorAll(".admin-dialog-close,.admin-dialog-cancel").forEach(button=>button.addEventListener("click",()=>bookDialog.close()));
+bookDialog.addEventListener("click",event=>{if(event.target===bookDialog)bookDialog.close();});
+bookForm.addEventListener("submit",event=>{
+event.preventDefault();if(!bookForm.reportValidity())return;
+const id=Number(bookForm.elements.id.value),title=bookForm.elements.title.value.trim(),duplicate=books.some(book=>book.id!==id&&normalize(book.title)===normalize(title));
+if(duplicate){bookFormMessage.textContent="Đã có đầu sách trùng tên trong kho.";return;}
+const existing=books.find(book=>book.id===id),book={id:id||Math.max(...books.map(item=>item.id))+1,title,author:bookForm.elements.author.value.trim(),category:bookForm.elements.category.value,year:Number(bookForm.elements.year.value),pages:Number(bookForm.elements.pages.value),rating:Number(bookForm.elements.rating.value),publisher:bookForm.elements.publisher.value.trim(),status:bookForm.elements.status.value,description:bookForm.elements.description.value.trim(),image:bookForm.elements.image.value.trim()||existing?.image||books[0].image,cover:existing?.cover||"cover-one"};
+const index=books.findIndex(item=>item.id===book.id);if(index===-1)books.push(book);else books[index]=book;
+const overrides=readLocalList("bookin-admin-book-overrides"),overrideIndex=overrides.findIndex(item=>Number(item.id)===book.id);if(overrideIndex===-1)overrides.push(book);else overrides[overrideIndex]=book;
+writeLocalList("bookin-admin-book-overrides",overrides);
+bookDialog.close();renderAdmin();
+});
+bookDialog.querySelector(".admin-book-form")?.addEventListener("input",()=>{bookFormMessage.textContent="";});
+tableWrap.addEventListener("click",event=>{const button=event.target.closest('[data-book-action="edit"]');if(button){openBookDialog(books.find(book=>book.id===Number(button.dataset.bookId)));return;}const loanButton=event.target.closest("[data-loan-action]");if(loanButton)updateRequest(loanButton.dataset.entryId,loanButton.dataset.loanAction);});
 document.querySelectorAll("[data-admin-tab]").forEach(button=>button.addEventListener("click",()=>{activeTab=button.dataset.adminTab;document.querySelectorAll("[data-admin-tab]").forEach(tab=>{const selected=tab===button;tab.classList.toggle("is-active",selected);tab.setAttribute("aria-selected",String(selected));});searchInput.value="";updateStatusOptions();renderAdmin();}));
 searchInput.addEventListener("input",renderAdmin);statusFilter.addEventListener("change",renderAdmin);document.getElementById("adminRefresh")?.addEventListener("click",renderAdmin);
-tableWrap.addEventListener("click",event=>{const button=event.target.closest("[data-loan-action]");if(button)updateRequest(button.dataset.entryId,button.dataset.loanAction);});
 updateStatusOptions();renderAdmin();
 }
 document.addEventListener("DOMContentLoaded",()=>{

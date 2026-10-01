@@ -62,6 +62,11 @@ document.querySelector(".header-logout")?.addEventListener("click",logoutUser);
 document.addEventListener("DOMContentLoaded",initAccountHeader);
 function logoutUser(){localStorage.removeItem("bookin-current-user");localStorage.removeItem("bookin-profile");location.href="index.html";}
 function normalizeEmail(email){return email.trim().toLowerCase();}
+function setUserFieldFeedback(input,feedback,text,state="error"){
+input.setCustomValidity(text||"");
+feedback.textContent=text||"";
+feedback.className=`user-field-feedback${text?` is-${state}`:""}`;
+}
 function emailAlreadyRegistered(email){
 const normalizedEmail=normalizeEmail(email),registeredUsers=readLocalList("bookin-registered-users"),credentials=readLocalList("bookin-user-credentials");
 return [...users,...registeredUsers].some(user=>normalizeEmail(user.email)===normalizedEmail)||credentials.some(credential=>normalizeEmail(credential.email)===normalizedEmail);
@@ -81,29 +86,45 @@ return {email,salt:saltHex,hash:await derivePasswordHash(password,saltHex)};
 function initRegistrationForm(){
 const form=document.getElementById("registerForm");
 if(!form)return;
-const password=document.getElementById("registerPassword"),confirmPassword=document.getElementById("registerConfirm"),emailInput=document.getElementById("registerEmail"),emailFeedback=document.getElementById("registerEmailFeedback"),meterFill=document.getElementById("passwordMeterFill"),meterText=document.getElementById("passwordMeterText"),message=document.getElementById("registerMessage");
+const nameInput=document.getElementById("registerName"),password=document.getElementById("registerPassword"),confirmPassword=document.getElementById("registerConfirm"),emailInput=document.getElementById("registerEmail"),emailFeedback=document.getElementById("registerEmailFeedback"),passwordFeedback=document.getElementById("registerPasswordFeedback"),confirmFeedback=document.getElementById("registerConfirmFeedback"),terms=document.getElementById("registerTerms"),termsFeedback=document.getElementById("registerTermsFeedback"),meterFill=document.getElementById("passwordMeterFill"),meterText=document.getElementById("passwordMeterText"),message=document.getElementById("registerMessage");
 const submitButton=form.querySelector('button[type="submit"]');
 let submissionInProgress=false;
+function validateName(){
+const raw=nameInput.value,value=raw.trim(),error=raw&&!value?"Tên không thể chỉ chứa khoảng trắng.":value&&value.length<2?"Tên cần có ít nhất 2 ký tự.":"";
+setUserFieldFeedback(nameInput,document.getElementById("registerNameFeedback"),error);
+return !error;
+}
 function validateRegistrationEmail(){
 const email=normalizeEmail(emailInput.value);
 emailInput.setCustomValidity("");emailFeedback.textContent="";emailFeedback.className="email-feedback";
 if(!email)return false;
-if(!emailInput.validity.valid){emailFeedback.textContent="Vui lòng nhập email đúng định dạng.";emailFeedback.classList.add("is-error");return false;}
+if(!emailInput.validity.valid){emailInput.setCustomValidity("Vui lòng nhập email đúng định dạng.");emailFeedback.textContent="Vui lòng nhập email đúng định dạng.";emailFeedback.classList.add("is-error");return false;}
 const exists=emailAlreadyRegistered(email);
 if(exists){emailInput.setCustomValidity("Email này đã được đăng ký.");emailFeedback.textContent="Email này đã được đăng ký.";emailFeedback.classList.add("is-error");return false;}
 emailFeedback.textContent="Email có thể sử dụng.";emailFeedback.classList.add("is-available");return true;
 }
+nameInput.addEventListener("input",validateName);
+nameInput.addEventListener("blur",validateName);
+nameInput.addEventListener("invalid",()=>{if(!nameInput.value.trim())setUserFieldFeedback(nameInput,document.getElementById("registerNameFeedback"),"Vui lòng nhập họ và tên.");});
 emailInput.addEventListener("input",validateRegistrationEmail);
 emailInput.addEventListener("blur",validateRegistrationEmail);
+emailInput.addEventListener("invalid",()=>{if(!emailInput.value.trim()){emailFeedback.textContent="Vui lòng nhập email.";emailFeedback.className="email-feedback is-error";}else validateRegistrationEmail();});
 function updatePasswordFeedback(){
 const value=password.value;
 const strength=[value.length>=8,/[A-Za-z]/.test(value),/\d/.test(value),/[^A-Za-z0-9]/.test(value)].filter(Boolean).length;
 meterFill.dataset.strength=String(strength);
 meterText.textContent=value?(["","Yếu","Trung bình","Khá","Mạnh"][strength]):"Độ mạnh mật khẩu";
-confirmPassword.setCustomValidity(confirmPassword.value&&confirmPassword.value!==value?"Mật khẩu xác nhận chưa khớp.":"");
+const passwordError=value&&value.length<8?"Mật khẩu cần có ít nhất 8 ký tự.":"";
+setUserFieldFeedback(password,passwordFeedback,passwordError);
+const confirmError=confirmPassword.value&&confirmPassword.value!==value?"Mật khẩu xác nhận chưa khớp.":"";
+setUserFieldFeedback(confirmPassword,confirmFeedback,confirmError);
 }
 password.addEventListener("input",updatePasswordFeedback);
+password.addEventListener("invalid",()=>{if(!password.value)setUserFieldFeedback(password,passwordFeedback,"Vui lòng nhập mật khẩu.");else updatePasswordFeedback();});
 confirmPassword.addEventListener("input",updatePasswordFeedback);
+confirmPassword.addEventListener("invalid",()=>{if(!confirmPassword.value)setUserFieldFeedback(confirmPassword,confirmFeedback,"Vui lòng xác nhận mật khẩu.");else updatePasswordFeedback();});
+terms.addEventListener("change",()=>setUserFieldFeedback(terms,termsFeedback,terms.checked?"":"Bạn cần đồng ý với điều khoản để tạo tài khoản."));
+terms.addEventListener("invalid",()=>{if(!terms.checked)setUserFieldFeedback(terms,termsFeedback,"Bạn cần đồng ý với điều khoản để tạo tài khoản.");});
 document.querySelectorAll("[data-password-toggle]").forEach(button=>button.addEventListener("click",()=>{
 const input=document.getElementById(button.dataset.passwordToggle),visible=input.type==="password";
 input.type=visible?"text":"password";
@@ -113,8 +134,10 @@ button.innerHTML=visible?'<i class="fa-regular fa-eye-slash" aria-hidden="true">
 form.addEventListener("submit",async event=>{
 event.preventDefault();
 if(submissionInProgress)return;
+validateName();
 updatePasswordFeedback();
 validateRegistrationEmail();
+if(!terms.checked)setUserFieldFeedback(terms,termsFeedback,"Bạn cần đồng ý với điều khoản để tạo tài khoản.");
 if(!form.reportValidity())return;
 const email=normalizeEmail(emailInput.value),name=document.getElementById("registerName").value.trim();
 if(emailAlreadyRegistered(email)){
@@ -148,10 +171,26 @@ document.addEventListener("DOMContentLoaded",initRegistrationForm);
 function initLoginForm(){
 const form=document.getElementById("loginForm");
 if(!form)return;
-const emailInput=document.getElementById("loginEmail"),password=document.getElementById("loginPassword"),message=document.getElementById("loginMessage"),remember=document.querySelector('#loginForm input[name="remember"]');
+const emailInput=document.getElementById("loginEmail"),password=document.getElementById("loginPassword"),emailFeedback=document.getElementById("loginEmailFeedback"),passwordFeedback=document.getElementById("loginPasswordFeedback"),message=document.getElementById("loginMessage"),remember=document.querySelector('#loginForm input[name="remember"]');
 const submitButton=form.querySelector('button[type="submit"]');
 let loginInProgress=false;
 emailInput.value=localStorage.getItem("bookin-remembered-email")||"";
+function validateLoginEmail(){
+const value=emailInput.value.trim();
+if(!value){setUserFieldFeedback(emailInput,emailFeedback,"");return false;}
+const error=emailInput.validity.valid?"":"Email chưa đúng định dạng.";
+setUserFieldFeedback(emailInput,emailFeedback,error,error?"error":"valid");return !error;
+}
+function validateLoginPassword(){
+const error=password.value?"":"Vui lòng nhập mật khẩu.";
+setUserFieldFeedback(password,passwordFeedback,error);return !error;
+}
+emailInput.addEventListener("input",validateLoginEmail);
+emailInput.addEventListener("blur",validateLoginEmail);
+password.addEventListener("input",validateLoginPassword);
+password.addEventListener("blur",validateLoginPassword);
+emailInput.addEventListener("invalid",()=>{if(!emailInput.value.trim())setUserFieldFeedback(emailInput,emailFeedback,"Vui lòng nhập email.");else validateLoginEmail();});
+password.addEventListener("invalid",()=>{if(!password.value)setUserFieldFeedback(password,passwordFeedback,"Vui lòng nhập mật khẩu.");});
 document.querySelector("[data-login-password-toggle]")?.addEventListener("click",event=>{
 const button=event.currentTarget,visible=password.type==="password";
 password.type=visible?"text":"password";
@@ -161,6 +200,7 @@ button.innerHTML=visible?'<i class="fa-regular fa-eye-slash" aria-hidden="true">
 form.addEventListener("submit",async event=>{
 event.preventDefault();
 if(loginInProgress)return;
+validateLoginEmail();validateLoginPassword();
 if(!form.reportValidity())return;
 const email=normalizeEmail(emailInput.value),credential=readLocalList("bookin-user-credentials").find(item=>item.email===email),user=readLocalList("bookin-registered-users").find(item=>normalizeEmail(item.email)===email);
 if(!credential||!user||user.status!=="active"){
@@ -243,11 +283,27 @@ function initProfilePage(){
 const form=document.getElementById("profileForm");
 if(!form)return;
 const profileKey="bookin-profile",savedKey="bookin-saved-books",requestsKey="bookin-borrow-requests";
-const nameInput=document.getElementById("profileNameInput"),emailInput=document.getElementById("profileEmailInput"),message=document.getElementById("profileMessage"),logoutButton=document.getElementById("logoutButton");
+const nameInput=document.getElementById("profileNameInput"),emailInput=document.getElementById("profileEmailInput"),nameFeedback=document.getElementById("profileNameFeedback"),emailFeedback=document.getElementById("profileEmailFeedback"),message=document.getElementById("profileMessage"),logoutButton=document.getElementById("logoutButton");
 let profile={name:"",email:""};
 try{profile=JSON.parse(localStorage.getItem(profileKey)||"{}");}catch{profile={};}
 nameInput.value=profile.name||"";emailInput.value=profile.email||"";
 if(logoutButton)logoutButton.hidden=!localStorage.getItem("bookin-current-user");
+function validateProfileName(){
+const value=nameInput.value.trim(),error=value.length<2?"Tên hiển thị cần có ít nhất 2 ký tự.":"";
+setUserFieldFeedback(nameInput,nameFeedback,error,error?"error":"valid");return !error;
+}
+function validateProfileEmail(){
+const email=normalizeEmail(emailInput.value),userId=localStorage.getItem("bookin-current-user"),currentUser=readLocalList("bookin-registered-users").find(user=>user.id===userId);
+let error="";
+if(!email)error="Vui lòng nhập email.";
+else if(!emailInput.validity.valid)error="Email chưa đúng định dạng.";
+else if(currentUser&&email!==normalizeEmail(currentUser.email)&&emailAlreadyRegistered(email))error="Email này đã được dùng bởi tài khoản khác.";
+setUserFieldFeedback(emailInput,emailFeedback,error,error?"error":"valid");return !error;
+}
+nameInput.addEventListener("input",validateProfileName);nameInput.addEventListener("blur",validateProfileName);
+emailInput.addEventListener("input",validateProfileEmail);emailInput.addEventListener("blur",validateProfileEmail);
+nameInput.addEventListener("invalid",()=>{if(!nameInput.value.trim())setUserFieldFeedback(nameInput,nameFeedback,"Vui lòng nhập tên hiển thị.");});
+emailInput.addEventListener("invalid",()=>{if(!emailInput.value.trim())setUserFieldFeedback(emailInput,emailFeedback,"Vui lòng nhập email.");else validateProfileEmail();});
 function renderProfile(){
 const name=profile.name||"Độc giả Bookin",initials=profile.name?.trim()?profile.name.trim().split(/\s+/).slice(-2).map(part=>part[0]).join("").toUpperCase():"Đ";
 document.getElementById("profileGreeting").textContent=profile.name?.trim().split(/\s+/)[0]||"độc giả";
@@ -263,7 +319,7 @@ document.getElementById("savedBooksEmpty").classList.toggle("hidden",savedBooks.
 document.getElementById("profileActivity").innerHTML=requests.length?requests.slice().reverse().slice(0,4).map(request=>{const book=books.find(item=>item.id===Number(request.id));if(!book)return "";const label=request.type==="waitlist"?"Đăng ký chờ":request.type==="cancelled"?"Đã hủy yêu cầu":request.type==="returned"?"Đã trả":request.type==="active"?"Đang mượn":"Yêu cầu mượn";return `<article class="activity-item"><span class="activity-icon"><i class="fa-solid fa-book-open"></i></span><div><strong>${book.title}</strong><small>${label} · ${new Date(request.returnedDate||request.date).toLocaleDateString("vi-VN")}</small></div></article>`;}).join(""):'<p class="activity-empty">Bạn chưa gửi yêu cầu mượn nào.</p>';
 }
 form.addEventListener("submit",event=>{
-event.preventDefault();if(!form.reportValidity())return;
+event.preventDefault();validateProfileName();validateProfileEmail();if(!form.reportValidity())return;
 const nextProfile={name:nameInput.value.trim(),email:normalizeEmail(emailInput.value)},currentUserId=localStorage.getItem("bookin-current-user"),registeredUsers=readLocalList("bookin-registered-users"),currentUser=registeredUsers.find(user=>user.id===currentUserId);
 if(currentUser&&nextProfile.email!==normalizeEmail(currentUser.email)&&emailAlreadyRegistered(nextProfile.email)){
 message.textContent="Email này đã được dùng bởi tài khoản khác.";message.classList.add("is-visible");return;

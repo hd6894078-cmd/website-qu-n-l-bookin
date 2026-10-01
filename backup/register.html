@@ -32,7 +32,8 @@
       <form id="registerForm" class="register-form">
         <label class="register-field" for="registerName">
           <span>Họ và tên</span>
-          <span class="register-input-wrap"><i class="fa-regular fa-user" aria-hidden="true"></i><input id="registerName" name="name" type="text" autocomplete="name" placeholder="Tên của bạn" minlength="2" required></span>
+          <span class="register-input-wrap"><i class="fa-regular fa-user" aria-hidden="true"></i><input id="registerName" name="name" type="text" autocomplete="name" placeholder="Tên của bạn" minlength="2" aria-describedby="registerNameFeedback" required></span>
+          <span id="registerNameFeedback" class="user-field-feedback" aria-live="polite"></span>
         </label>
         <label class="register-field" for="registerEmail">
           <span>Email</span>
@@ -41,14 +42,17 @@
         </label>
         <label class="register-field" for="registerPassword">
           <span>Mật khẩu</span>
-          <span class="register-input-wrap"><i class="fa-solid fa-lock" aria-hidden="true"></i><input id="registerPassword" name="password" type="password" autocomplete="new-password" placeholder="Ít nhất 8 ký tự" minlength="8" required><button class="password-toggle" type="button" data-password-toggle="registerPassword" aria-label="Hiện mật khẩu"><i class="fa-regular fa-eye" aria-hidden="true"></i></button></span>
+          <span class="register-input-wrap"><i class="fa-solid fa-lock" aria-hidden="true"></i><input id="registerPassword" name="password" type="password" autocomplete="new-password" placeholder="Ít nhất 8 ký tự" minlength="8" aria-describedby="registerPasswordFeedback" required><button class="password-toggle" type="button" data-password-toggle="registerPassword" aria-label="Hiện mật khẩu"><i class="fa-regular fa-eye" aria-hidden="true"></i></button></span>
+          <span id="registerPasswordFeedback" class="user-field-feedback" aria-live="polite"></span>
           <span class="password-meter" aria-live="polite"><span class="password-meter-track"><span id="passwordMeterFill"></span></span><span id="passwordMeterText">Độ mạnh mật khẩu</span></span>
         </label>
         <label class="register-field" for="registerConfirm">
           <span>Xác nhận mật khẩu</span>
-          <span class="register-input-wrap"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><input id="registerConfirm" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Nhập lại mật khẩu" required><button class="password-toggle" type="button" data-password-toggle="registerConfirm" aria-label="Hiện mật khẩu"><i class="fa-regular fa-eye" aria-hidden="true"></i></button></span>
+          <span class="register-input-wrap"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><input id="registerConfirm" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Nhập lại mật khẩu" aria-describedby="registerConfirmFeedback" required><button class="password-toggle" type="button" data-password-toggle="registerConfirm" aria-label="Hiện mật khẩu"><i class="fa-regular fa-eye" aria-hidden="true"></i></button></span>
+          <span id="registerConfirmFeedback" class="user-field-feedback" aria-live="polite"></span>
         </label>
-        <label class="register-terms"><input id="registerTerms" name="terms" type="checkbox" required><span>Tôi đồng ý với <a href="#terms">điều khoản sử dụng</a> và chính sách bảo mật.</span></label>
+        <label class="register-terms"><input id="registerTerms" name="terms" type="checkbox" aria-describedby="registerTermsFeedback" required><span>Tôi đồng ý với <a href="#terms">điều khoản sử dụng</a> và chính sách bảo mật.</span></label>
+        <span id="registerTermsFeedback" class="user-field-feedback" aria-live="polite"></span>
         <button class="register-submit" type="submit">Tạo tài khoản <i class="fa-solid fa-arrow-right"></i></button>
         <p id="registerMessage" class="register-message" role="status" aria-live="polite"></p>
       </form>

@@ -29,8 +29,8 @@
       <section class="profile-section profile-edit-panel" id="profileEditPanel">
         <div class="profile-section-heading"><div><span>THÔNG TIN</span><h2>Hồ sơ của bạn</h2></div></div>
         <form id="profileForm" class="profile-form">
-          <label for="profileNameInput">Tên hiển thị<input id="profileNameInput" name="name" type="text" autocomplete="name" placeholder="Tên của bạn" minlength="2" required></label>
-          <label for="profileEmailInput">Email<input id="profileEmailInput" name="email" type="email" autocomplete="email" placeholder="ban@email.com" required></label>
+          <label for="profileNameInput">Tên hiển thị<input id="profileNameInput" name="name" type="text" autocomplete="name" placeholder="Tên của bạn" minlength="2" aria-describedby="profileNameFeedback" required><span id="profileNameFeedback" class="user-field-feedback" aria-live="polite"></span></label>
+          <label for="profileEmailInput">Email<input id="profileEmailInput" name="email" type="email" autocomplete="email" placeholder="ban@email.com" aria-describedby="profileEmailFeedback" required><span id="profileEmailFeedback" class="user-field-feedback" aria-live="polite"></span></label>
           <button type="submit" class="profile-save">Lưu thông tin</button>
           <p id="profileMessage" class="profile-message" role="status" aria-live="polite"></p>
         </form>

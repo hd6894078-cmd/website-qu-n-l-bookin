@@ -240,6 +240,13 @@ function readLocalList(key){
 try{const value=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(value)?value:[];}catch{return [];}
 }
 function writeLocalList(key,value){localStorage.setItem(key,JSON.stringify(value));}
+function setBookInventoryStatus(bookId,status){
+const book=books.find(item=>item.id===Number(bookId));if(!book)return;
+book.status=status;
+const overrides=readLocalList("bookin-admin-book-overrides"),index=overrides.findIndex(item=>Number(item.id)===book.id);
+if(index===-1)overrides.push({...book});else overrides[index]={...overrides[index],...book};
+writeLocalList("bookin-admin-book-overrides",overrides);
+}
 function currentUserBorrowRequests(){
 const userId=localStorage.getItem("bookin-current-user");
 if(!userId)return [];
@@ -384,7 +391,7 @@ dialog.querySelectorAll(".borrow-dialog-cancel,.borrow-dialog-x").forEach(contro
 dialog.addEventListener("click",event=>{if(event.target===dialog)closeDialog();});
 dialog.querySelector(".return-confirm").addEventListener("click",()=>{
 const userId=localStorage.getItem("bookin-current-user"),requests=readLocalList(requestsKey),index=requests.findIndex(request=>request.userId===userId&&Number(request.id)===book.id&&request.type==="active");
-if(index!==-1){const returnedDate=new Date().toISOString();requests[index]={...requests[index],type:"returned",returnedDate};writeLocalList(requestsKey,requests);appendBorrowEvent({userId,entryId:requests[index].entryId,bookId:book.id,action:"returned",date:returnedDate});}
+if(index!==-1){const returnedDate=new Date().toISOString();requests[index]={...requests[index],type:"returned",returnedDate};writeLocalList(requestsKey,requests);appendBorrowEvent({userId,entryId:requests[index].entryId,bookId:book.id,action:"returned",date:returnedDate});const stillBorrowed=requests.some(request=>Number(request.id)===book.id&&request.type==="active");setBookInventoryStatus(book.id,stillBorrowed?"borrowed":"available");}
 closeDialog();renderBorrowed();
 });
 dialog.showModal();
@@ -484,14 +491,16 @@ function updateRequest(entryId,action){
 const requests=readLocalList("bookin-borrow-requests"),index=requests.findIndex(request=>(request.entryId||`${request.userId}-${request.id}-${request.date}`)===entryId);if(index===-1)return;
 const request=requests[index],book=books.find(item=>item.id===Number(request.id));if(!book)return;
 const now=new Date(),date=now.toISOString();
-if(action==="approve"){
+if(action==="approve"&&(request.type==="borrow"||request.type==="waitlist")){
 const dueDate=new Date(now);dueDate.setDate(dueDate.getDate()+14);
 request.type="active";request.entryId=request.entryId||entryId;request.borrowedAt=date;request.dueDate=dueDate.toISOString();
 appendBorrowEvent({userId:request.userId,entryId:request.entryId,bookId:book.id,action:"borrowed",date,dueDate:request.dueDate});
+setBookInventoryStatus(book.id,"borrowed");
 }else if(action==="return"&&request.type==="active"){
 request.type="returned";request.returnedDate=date;
 appendBorrowEvent({userId:request.userId,entryId:request.entryId,bookId:book.id,action:"returned",date});
-}
+setBookInventoryStatus(book.id,requests.some(item=>Number(item.id)===book.id&&item.type==="active")?"borrowed":"available");
+}else return;
 writeLocalList("bookin-borrow-requests",requests);renderAdmin();
 }
 function deleteBook(bookId){
@@ -636,6 +645,7 @@ if(alreadyRequested){closeDialog();location.href="borrowed.html";return;}
 const borrowedAt=new Date(),dueDate=new Date(borrowedAt);dueDate.setDate(dueDate.getDate()+14);
 const entryId=`loan-${activeUserId}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,action=isAvailable?"borrowed":"waitlist_requested",date=borrowedAt.toISOString(),dueDateValue=isAvailable?dueDate.toISOString():null;
 requests.push({id:book.id,userId:activeUserId,entryId,type:isAvailable?"active":"waitlist",date,...(dueDateValue?{dueDate:dueDateValue}: {})});
+if(isAvailable)setBookInventoryStatus(book.id,"borrowed");
 writeLocalList("bookin-borrow-requests",requests);
 appendBorrowEvent({userId:activeUserId,entryId,bookId:book.id,action,date,dueDate:dueDateValue});
 closeDialog();location.href="borrowed.html";

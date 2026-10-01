@@ -240,6 +240,32 @@ function readLocalList(key){
 try{const value=JSON.parse(localStorage.getItem(key)||"[]");return Array.isArray(value)?value:[];}catch{return [];}
 }
 function writeLocalList(key,value){localStorage.setItem(key,JSON.stringify(value));}
+function showConfirmDialog({title,message,book,confirmText="Xác nhận xóa",cancelText="Hủy bỏ",isDanger=true,onConfirm}){
+document.querySelectorAll(".confirm-delete-dialog").forEach(el=>el.remove());
+const dialog=document.createElement("dialog");
+dialog.className="borrow-dialog confirm-delete-dialog";
+const escapeHTML=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]));
+const bookSnippet=book?`<div class="borrow-dialog-book"><img src="${escapeHTML(book.image)}" alt="Bìa sách ${escapeHTML(book.title)}"><div><strong>${escapeHTML(book.title)}</strong><span>Tác giả: ${escapeHTML(book.author)}</span><small>${escapeHTML(book.category)}</small></div></div>`:'';
+dialog.innerHTML=`<div class="borrow-dialog-panel"><button class="borrow-dialog-x" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button><span class="borrow-dialog-kicker"${isDanger?' style="color:#a45448;"':''}>XÁC NHẬN THAO TÁC</span><h2>${escapeHTML(title)}</h2>${bookSnippet}<p class="borrow-dialog-copy">${escapeHTML(message)}</p><div class="borrow-dialog-actions"><button class="borrow-dialog-cancel" type="button">${escapeHTML(cancelText)}</button><button class="borrow-dialog-confirm ${isDanger?'delete-confirm':''}" type="button">${isDanger?'<i class="fa-solid fa-trash-can"></i> ':''}${escapeHTML(confirmText)}</button></div></div>`;
+document.body.append(dialog);
+const closeDialog=()=>{dialog.close();dialog.remove();};
+dialog.querySelectorAll(".borrow-dialog-cancel,.borrow-dialog-x").forEach(btn=>btn.addEventListener("click",closeDialog));
+dialog.addEventListener("click",event=>{if(event.target===dialog)closeDialog();});
+dialog.querySelector(".borrow-dialog-confirm").addEventListener("click",()=>{closeDialog();if(typeof onConfirm==="function")onConfirm();});
+dialog.showModal();
+}
+function showNoticeDialog(title,message){
+document.querySelectorAll(".notice-dialog").forEach(el=>el.remove());
+const dialog=document.createElement("dialog");
+dialog.className="borrow-dialog notice-dialog";
+const escapeHTML=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]));
+dialog.innerHTML=`<div class="borrow-dialog-panel"><button class="borrow-dialog-x" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button><span class="borrow-dialog-kicker" style="color:#a45448;">THÔNG BÁO</span><h2>${escapeHTML(title)}</h2><p class="borrow-dialog-copy" style="margin-top:14px;">${escapeHTML(message)}</p><div class="borrow-dialog-actions"><button class="borrow-dialog-confirm" type="button" style="background:#20211f;border-color:#20211f;">Đã hiểu</button></div></div>`;
+document.body.append(dialog);
+const closeDialog=()=>{dialog.close();dialog.remove();};
+dialog.querySelectorAll(".borrow-dialog-confirm,.borrow-dialog-x").forEach(btn=>btn.addEventListener("click",closeDialog));
+dialog.addEventListener("click",event=>{if(event.target===dialog)closeDialog();});
+dialog.showModal();
+}
 function setBookInventoryStatus(bookId,status){
 const book=books.find(item=>item.id===Number(bookId));if(!book)return;
 book.status=status;
@@ -400,8 +426,22 @@ requestList.addEventListener("click",event=>{
 const button=event.target.closest("[data-cancel-request]");if(!button)return;
 const id=Number(button.dataset.cancelRequest),userId=localStorage.getItem("bookin-current-user"),requests=readLocalList(requestsKey);
 const index=requests.findIndex(request=>request.userId===userId&&Number(request.id)===id&&(request.type==="borrow"||request.type==="waitlist"));
-if(index!==-1){const cancelledDate=new Date().toISOString(),previousType=requests[index].type;requests[index]={...requests[index],type:"cancelled",previousType,cancelledDate};appendBorrowEvent({userId,entryId:requests[index].entryId,bookId:id,action:"cancelled",date:cancelledDate});}
+if(index===-1)return;
+const book=books.find(item=>item.id===id);
+showConfirmDialog({
+title:"Hủy yêu cầu mượn",
+message:"Bạn có chắc chắn muốn hủy yêu cầu mượn cuốn sách này?",
+book:book,
+confirmText:"Hủy yêu cầu",
+cancelText:"Quay lại",
+isDanger:true,
+onConfirm:()=>{
+const cancelledDate=new Date().toISOString(),previousType=requests[index].type;
+requests[index]={...requests[index],type:"cancelled",previousType,cancelledDate};
+appendBorrowEvent({userId,entryId:requests[index].entryId,bookId:id,action:"cancelled",date:cancelledDate});
 writeLocalList(requestsKey,requests);renderBorrowed();
+}
+});
 });
 renderBorrowed();
 }
@@ -511,8 +551,18 @@ writeLocalList("bookin-borrow-requests",requests);renderAdmin();
 function deleteBook(bookId){
 const book=books.find(item=>item.id===Number(bookId));if(!book)return;
 const hasTransactions=readLocalList("bookin-borrow-requests").some(request=>Number(request.id)===book.id)||readLocalList("bookin-borrow-events").some(event=>Number(event.bookId)===book.id);
-if(hasTransactions){alert("Không thể xóa sách đã có lịch sử mượn/trả. Hãy giữ sách trong kho để bảo toàn lịch sử.");return;}
-if(!confirm(`Xóa “${book.title}” khỏi kho sách?`))return;
+if(hasTransactions){
+showNoticeDialog("Không thể xóa sách","Không thể xóa sách đã có lịch sử mượn/trả. Hãy giữ sách trong kho để bảo toàn lịch sử.");
+return;
+}
+showConfirmDialog({
+title:"Xóa đầu sách khỏi kho",
+message:`Bạn có chắc chắn muốn xóa cuốn sách “${book.title}” khỏi kho sách không? Thao tác này sẽ xóa sách trên thiết bị này.`,
+book:book,
+confirmText:"Xóa sách",
+cancelText:"Hủy bỏ",
+isDanger:true,
+onConfirm:()=>{
 const index=books.findIndex(item=>item.id===book.id);if(index!==-1)books.splice(index,1);
 writeLocalList("bookin-admin-book-overrides",readLocalList("bookin-admin-book-overrides").filter(item=>Number(item.id)!==book.id));
 const deletedIds=new Set(readLocalList("bookin-admin-deleted-books").map(Number));deletedIds.add(book.id);writeLocalList("bookin-admin-deleted-books",[...deletedIds]);
@@ -520,6 +570,8 @@ writeLocalList("bookin-saved-books",readLocalList("bookin-saved-books").filter(s
 const registeredUsers=readLocalList("bookin-registered-users");registeredUsers.forEach(user=>{user.savedBookIds=(user.savedBookIds||[]).filter(savedId=>Number(savedId)!==book.id);});writeLocalList("bookin-registered-users",registeredUsers);
 users.forEach(user=>{user.savedBookIds=(user.savedBookIds||[]).filter(savedId=>Number(savedId)!==book.id);});
 renderAdmin();
+}
+});
 }
 const categorySelect=document.getElementById("adminBookCategory");
 [...new Set(books.map(book=>book.category))].sort().forEach(category=>categorySelect.insertAdjacentHTML("beforeend",`<option value="${escapeHTML(category)}">${escapeHTML(category)}</option>`));

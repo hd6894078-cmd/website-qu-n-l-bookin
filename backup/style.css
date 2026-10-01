@@ -137,6 +137,8 @@ header:after{content:'';position:absolute;left:7%;right:7%;bottom:0;height:1px;b
 .borrow-dialog-cancel:hover{background:#f8f6f2}
 .borrow-dialog-confirm{border-color:var(--orange);background:var(--orange);color:#fff;text-decoration:none}
 .borrow-dialog-confirm:hover{border-color:var(--orange-dark);background:var(--orange-dark)}
+.borrow-dialog-confirm.delete-confirm{border-color:#a45448;background:#a45448;color:#fff}
+.borrow-dialog-confirm.delete-confirm:hover{border-color:#8c4338;background:#8c4338}
 @media(max-width:480px){.borrow-dialog-panel{padding:24px 19px}.borrow-dialog-panel h2{font-size:22px}.borrow-dialog-actions>*{flex:1}}
 .user-book-status,.user-request-status{width:max-content;max-width:100%;display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid transparent;border-radius:999px;font-size:9px;font-weight:700;line-height:1.2}
 .user-book-status.pending,.user-request-status.pending{border-color:#f0dfc4;background:#fff4e6;color:#a66a24}

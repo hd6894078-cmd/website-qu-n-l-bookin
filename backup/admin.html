@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#faf8f3">
+<title>Quản trị thư viện - Bookin</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="admin-page">
+<div id="site-header"></div>
+<main class="admin-main">
+  <section class="admin-heading">
+    <div><span class="admin-eyebrow">BOOKIN · ĐIỀU HÀNH</span><h1>Quản trị thư viện</h1><p>Tổng quan và cập nhật hoạt động thư viện.</p></div>
+    <button id="adminRefresh" class="admin-refresh" type="button"><i class="fa-solid fa-rotate"></i> Làm mới</button>
+  </section>
+  <section class="admin-stats" aria-label="Tổng quan thư viện">
+    <article><span class="admin-stat-icon books"><i class="fa-solid fa-book"></i></span><div><small>Đầu sách</small><strong id="adminBookCount">0</strong></div><span id="adminStockNote" class="admin-stat-note"></span></article>
+    <article><span class="admin-stat-icon readers"><i class="fa-solid fa-users"></i></span><div><small>Người đọc</small><strong id="adminUserCount">0</strong></div><span id="adminUserNote" class="admin-stat-note"></span></article>
+    <article><span class="admin-stat-icon loans"><i class="fa-solid fa-book-open"></i></span><div><small>Đang mượn</small><strong id="adminActiveCount">0</strong></div><span class="admin-stat-note">Khoản mượn hiện hoạt</span></article>
+    <article><span class="admin-stat-icon pending"><i class="fa-regular fa-hourglass-half"></i></span><div><small>Chờ xử lý</small><strong id="adminPendingCount">0</strong></div><span class="admin-stat-note">Yêu cầu mượn</span></article>
+  </section>
+  <section class="admin-workspace">
+    <div class="admin-toolbar">
+      <div class="admin-tabs" role="tablist" aria-label="Khu vực quản trị">
+        <button class="admin-tab is-active" type="button" role="tab" aria-selected="true" data-admin-tab="loans"><i class="fa-solid fa-book-open"></i> Mượn trả</button>
+        <button class="admin-tab" type="button" role="tab" aria-selected="false" data-admin-tab="books"><i class="fa-solid fa-book"></i> Sách</button>
+        <button class="admin-tab" type="button" role="tab" aria-selected="false" data-admin-tab="users"><i class="fa-solid fa-users"></i> Người đọc</button>
+      </div>
+      <div class="admin-filters"><label class="admin-search"><i class="fa-solid fa-magnifying-glass"></i><input id="adminSearch" type="search" placeholder="Tìm theo tên, sách, email..." aria-label="Tìm trong bảng quản trị"></label><select id="adminStatusFilter" aria-label="Lọc theo trạng thái"><option value="all">Tất cả trạng thái</option></select></div>
+    </div>
+    <div id="adminTableWrap" class="admin-table-wrap" aria-live="polite"></div>
+    <p id="adminEmpty" class="admin-empty hidden">Không có dữ liệu phù hợp với bộ lọc.</p>
+  </section>
+  <p class="admin-demo-note"><i class="fa-solid fa-circle-info"></i> Bản demo frontend: dữ liệu quản trị được lưu trên thiết bị này, chưa có phân quyền hoặc đồng bộ máy chủ.</p>
+</main>
+<div id="site-footer"></div>
+<script src="script.js"></script>
+</body>
+</html>

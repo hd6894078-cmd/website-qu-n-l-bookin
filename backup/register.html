@@ -3,117 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Đăng ký - BOOKIN Library</title>
-
-    <link rel="stylesheet" href="register.css">
-    <link rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <meta name="theme-color" content="#faf8f3">
+    <title>Đăng ký - Bookin Library</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
+<body class="register-page">
 
-<body>
+<div id="site-header"></div>
 
-<div class="register-container">
+<main class="register-main">
+  <section class="register-layout" aria-labelledby="registerTitle">
+    <div class="register-story">
+      <span class="register-eyebrow"><i class="fa-solid fa-book-open"></i> BOOKIN READING CLUB</span>
+      <h1>Gia nhập<br><em>cộng đồng đọc.</em></h1>
+      <p>Tạo tài khoản để lưu lại những cuốn sách yêu thích, theo dõi lịch sử mượn và nhận gợi ý phù hợp.</p>
+      
+      <div class="register-note">
+        <i class="fa-solid fa-quote-left"></i>
+        <blockquote>Sách là chuyến du hành không tốn chi phí di chuyển.</blockquote>
+        <span>— Emily Dickinson</span>
+      </div>
 
-    <div class="register-box">
-
-        <!-- Logo -->
-        <div class="logo">
-            <i class="fa-solid fa-book-open"></i>
-            <span>BOOKIN</span>
-        </div>
-
-        <h1>Tạo tài khoản</h1>
-        <p class="subtitle">Đăng ký để bắt đầu sử dụng BOOKIN</p>
-
-        <form id="registerForm">
-
-            <!-- Họ tên -->
-            <div class="form-group">
-                <label>Họ và tên</label>
-                <div class="input-box">
-                    <i class="fa-solid fa-user"></i>
-                    <input type="text" id="fullname"
-                           placeholder="Nhập họ và tên">
-                </div>
-                <small id="fullnameError"></small>
-            </div>
-
-            <!-- Email -->
-            <div class="form-group">
-                <label>Email</label>
-                <div class="input-box">
-                    <i class="fa-solid fa-envelope"></i>
-                    <input type="email" id="email"
-                           placeholder="Nhập email">
-                </div>
-                <small id="emailError"></small>
-            </div>
-
-            <!-- Số điện thoại -->
-            <div class="form-group">
-                <label>Số điện thoại</label>
-                <div class="input-box">
-                    <i class="fa-solid fa-phone"></i>
-                    <input type="text" id="phone"
-                           placeholder="Nhập số điện thoại">
-                </div>
-                <small id="phoneError"></small>
-            </div>
-
-            <!-- Mật khẩu -->
-            <div class="form-group">
-                <label>Mật khẩu</label>
-                <div class="input-box">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="password"
-                           placeholder="Nhập mật khẩu">
-                    <i class="fa-solid fa-eye toggle-password"
-                       onclick="togglePassword('password', this)"></i>
-                </div>
-                <small id="passwordError"></small>
-            </div>
-
-            <!-- Nhập lại mật khẩu -->
-            <div class="form-group">
-                <label>Nhập lại mật khẩu</label>
-                <div class="input-box">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="confirmPassword"
-                           placeholder="Nhập lại mật khẩu">
-                    <i class="fa-solid fa-eye toggle-password"
-                       onclick="togglePassword('confirmPassword', this)"></i>
-                </div>
-                <small id="confirmError"></small>
-            </div>
-
-            <div class="agree">
-                <input type="checkbox" id="agree">
-                <label for="agree">
-                    Tôi đồng ý với điều khoản sử dụng
-                </label>
-            </div>
-
-            <button type="submit" class="register-btn">
-                Đăng ký
-            </button>
-
-        </form>
-
-        <p class="login-text">
-            Đã có tài khoản?
-            <a href="login.html">Đăng nhập</a>
-        </p>
-
-        <a href="index.html" class="back-home">
-            <i class="fa-solid fa-arrow-left"></i>
-            Về trang chủ
-        </a>
-
+      <div class="register-book-art" aria-hidden="true">
+        <i class="fa-solid fa-book-open"></i>
+      </div>
     </div>
 
-</div>
+    <div class="register-panel">
+      <div class="register-panel-heading">
+        <span class="register-step">BẮT ĐẦU NGAY</span>
+        <h2 id="registerTitle">Tạo tài khoản</h2>
+        <p>Nhập thông tin cá nhân để bắt đầu trải nghiệm Bookin.</p>
+      </div>
 
-<script src="register.js"></script>
+      <form id="registerForm" class="register-form">
+        <label class="register-field" for="registerName">
+          <span>Họ và tên</span>
+          <span class="register-input-wrap">
+            <i class="fa-regular fa-user" aria-hidden="true"></i>
+            <input id="registerName" name="name" type="text" autocomplete="name" placeholder="Nguyễn Văn A" required>
+          </span>
+          <span id="registerNameFeedback" class="user-field-feedback" aria-live="polite"></span>
+        </label>
 
+        <label class="register-field" for="registerEmail">
+          <span>Email</span>
+          <span class="register-input-wrap">
+            <i class="fa-regular fa-envelope" aria-hidden="true"></i>
+            <input id="registerEmail" name="email" type="email" autocomplete="email" placeholder="ban@email.com" required>
+          </span>
+          <span id="registerEmailFeedback" class="email-feedback" aria-live="polite"></span>
+        </label>
+
+        <label class="register-field" for="registerPassword">
+          <span>Mật khẩu</span>
+          <span class="register-input-wrap">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+            <input id="registerPassword" name="password" type="password" autocomplete="new-password" placeholder="Tối thiểu 8 ký tự" required>
+            <button class="password-toggle" type="button" data-password-toggle="registerPassword" aria-label="Hiện mật khẩu">
+              <i class="fa-regular fa-eye" aria-hidden="true"></i>
+            </button>
+          </span>
+          <span id="registerPasswordFeedback" class="user-field-feedback" aria-live="polite"></span>
+          <div class="password-meter">
+            <div class="password-meter-track">
+              <span id="passwordMeterFill" data-strength="0"></span>
+            </div>
+            <span id="passwordMeterText">Độ mạnh mật khẩu</span>
+          </div>
+        </label>
+
+        <label class="register-field" for="registerConfirm">
+          <span>Xác nhận mật khẩu</span>
+          <span class="register-input-wrap">
+            <i class="fa-solid fa-lock" aria-hidden="true"></i>
+            <input id="registerConfirm" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Nhập lại mật khẩu" required>
+            <button class="password-toggle" type="button" data-password-toggle="registerConfirm" aria-label="Hiện mật khẩu">
+              <i class="fa-regular fa-eye" aria-hidden="true"></i>
+            </button>
+          </span>
+          <span id="registerConfirmFeedback" class="user-field-feedback" aria-live="polite"></span>
+        </label>
+
+        <label class="register-terms" for="registerTerms">
+          <input id="registerTerms" name="terms" type="checkbox" required>
+          <span>Tôi đồng ý với <a href="#">dịch vụ &amp; điều khoản</a> của Bookin.</span>
+        </label>
+        <span id="registerTermsFeedback" class="user-field-feedback" aria-live="polite"></span>
+
+        <button class="register-submit" type="submit">
+          Tạo tài khoản <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+        </button>
+
+        <p id="registerMessage" class="register-message" role="status" aria-live="polite"></p>
+      </form>
+
+      <p class="register-login">Đã có tài khoản? <a href="login.html">Đăng nhập</a></p>
+
+      <a class="register-back" href="index.html">
+        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Quay về trang chủ
+      </a>
+    </div>
+  </section>
+</main>
+
+<div id="site-footer"></div>
+
+<script src="script.js"></script>
 </body>
 </html>

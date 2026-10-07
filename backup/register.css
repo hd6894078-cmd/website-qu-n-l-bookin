@@ -1,0 +1,155 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #fcf8f1;
+    color: #493a30;
+}
+
+.register-container {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 30px 15px;
+}
+
+.register-box {
+    width: 450px;
+    background: white;
+    padding: 35px 40px;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(80, 50, 30, 0.12);
+}
+
+.logo {
+    text-align: center;
+    color: #b86f4c;
+    font-size: 25px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.logo i {
+    margin-right: 8px;
+}
+
+h1 {
+    text-align: center;
+    font-family: Georgia, serif;
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #8b7a6d;
+    margin-bottom: 25px;
+}
+
+.form-group {
+    margin-bottom: 17px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 7px;
+}
+
+.input-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ddd0c5;
+    border-radius: 8px;
+    padding: 0 12px;
+    background: #fffdf9;
+}
+
+.input-box i {
+    color: #b86f4c;
+    width: 20px;
+}
+
+.input-box input {
+    width: 100%;
+    border: none;
+    outline: none;
+    padding: 12px 10px;
+    background: transparent;
+    font-size: 14px;
+}
+
+.toggle-password {
+    cursor: pointer;
+}
+
+small {
+    display: block;
+    color: #d9534f;
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.agree {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 18px 0;
+    font-size: 13px;
+}
+
+.agree input {
+    accent-color: #b86f4c;
+}
+
+.register-btn {
+    width: 100%;
+    border: none;
+    background: #b86f4c;
+    color: white;
+    padding: 13px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.register-btn:hover {
+    background: #9e5c3e;
+}
+
+.login-text {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+.login-text a {
+    color: #b86f4c;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.back-home {
+    display: block;
+    text-align: center;
+    margin-top: 18px;
+    color: #76665a;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.back-home:hover {
+    color: #b86f4c;
+}
+
+@media (max-width: 500px) {
+    .register-box {
+        padding: 28px 22px;
+    }
+}

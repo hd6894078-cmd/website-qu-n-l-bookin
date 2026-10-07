@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#faf8f3">
+<title>Sách đang mượn - Bookin</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="borrowed-page">
+<div id="site-header"></div>
+<main class="borrowed-main">
+  <section class="borrowed-hero">
+    <div><span class="borrowed-eyebrow">HÀNH TRÌNH ĐỌC CỦA BẠN</span><h1>Sách đang <em>mượn.</em></h1><p>Theo dõi những cuốn sách và yêu cầu mượn của bạn tại Bookin.</p></div>
+    <a class="profile-browse" href="books.html">Tìm thêm sách <i class="fa-solid fa-arrow-right"></i></a>
+  </section>
+  <section class="borrowed-summary" aria-label="Tổng quan sách mượn">
+    <div><span class="borrowed-summary-icon active"><i class="fa-solid fa-book-open"></i></span><strong id="activeLoanCount">0</strong><small>Đang mượn</small></div>
+    <div><span class="borrowed-summary-icon pending"><i class="fa-regular fa-hourglass-half"></i></span><strong id="pendingRequestCount">0</strong><small>Yêu cầu chờ xử lý</small></div>
+    <p><i class="fa-solid fa-circle-info"></i> Trong bản demo, xác nhận mượn sẽ ghi nhận sách đang mượn với hạn trả dự kiến 14 ngày.</p>
+  </section>
+  <section class="borrowed-section">
+    <div class="borrowed-section-heading"><div><span>TRONG TAY BẠN</span><h2>Sách đang mượn</h2></div><span id="activeLoanLabel" class="borrowed-count">0 cuốn</span></div>
+    <div id="activeLoansList" class="active-loans-list"></div>
+    <div id="activeLoansEmpty" class="borrowed-empty"><span><i class="fa-solid fa-book-open"></i></span><h3>Chưa có sách mượn đang hoạt động</h3><p>Sách đã xác nhận mượn sẽ hiện ở đây cùng hạn trả dự kiến.</p><a class="primary-btn" href="books.html">Chọn sách để đọc <i class="fa-solid fa-arrow-right"></i></a></div>
+  </section>
+  <section class="borrowed-section request-section">
+    <div class="borrowed-section-heading"><div><span>ĐANG ĐƯỢC XỬ LÝ</span><h2>Yêu cầu mượn</h2></div><div class="borrowed-heading-actions"><a href="history.html">Lịch sử mượn <i class="fa-solid fa-arrow-right"></i></a><span id="requestLabel" class="borrowed-count">0 yêu cầu</span></div></div>
+    <div id="borrowRequestsList" class="borrow-requests-list"></div>
+    <div id="borrowRequestsEmpty" class="request-empty"><i class="fa-regular fa-clipboard"></i><p>Bạn chưa gửi yêu cầu mượn nào.</p><a href="books.html">Khám phá kho sách</a></div>
+  </section>
+</main>
+<div id="site-footer"></div>
+<script src="script.js"></script>
+</body>
+</html>

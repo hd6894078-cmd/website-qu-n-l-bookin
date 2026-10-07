@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#faf8f3">
+<title>Lịch sử mượn - Bookin</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body class="history-page">
+<div id="site-header"></div>
+<main class="history-main">
+  <section class="history-hero">
+    <div><span class="history-eyebrow">NHỮNG TRANG ĐÃ ĐI QUA</span><h1>Lịch sử <em>mượn sách.</em></h1><p>Xem lại các yêu cầu và trạng thái mượn sách của bạn.</p></div>
+    <a class="profile-browse" href="books.html">Khám phá sách <i class="fa-solid fa-arrow-right"></i></a>
+  </section>
+  <section class="history-overview" aria-label="Tổng quan lịch sử mượn">
+    <div><span class="history-stat-icon total"><i class="fa-solid fa-list-check"></i></span><strong id="historyTotal">0</strong><small>Tổng hoạt động</small></div>
+    <div><span class="history-stat-icon pending"><i class="fa-regular fa-hourglass-half"></i></span><strong id="historyPending">0</strong><small>Đang chờ</small></div>
+    <div><span class="history-stat-icon active"><i class="fa-solid fa-book-open"></i></span><strong id="historyActive">0</strong><small>Đang mượn</small></div>
+    <div><span class="history-stat-icon cancelled"><i class="fa-solid fa-arrow-rotate-left"></i></span><strong id="historyClosed">0</strong><small>Đã kết thúc</small></div>
+  </section>
+  <section class="history-content">
+    <div class="history-toolbar"><div><span>LƯU TRỮ CÁ NHÂN</span><h2>Các hoạt động gần đây</h2></div><div class="history-filters" role="group" aria-label="Lọc lịch sử mượn"><button type="button" class="history-filter is-active" data-history-filter="all">Tất cả</button><button type="button" class="history-filter" data-history-filter="pending">Đang chờ</button><button type="button" class="history-filter" data-history-filter="active">Đang mượn</button><button type="button" class="history-filter" data-history-filter="closed">Đã kết thúc</button></div></div>
+    <div id="historyList" class="history-list"></div>
+    <div id="historyEmpty" class="history-empty hidden"><span><i class="fa-regular fa-clock"></i></span><h3>Chưa có hoạt động mượn sách</h3><p>Các yêu cầu mượn, đăng ký chờ và trạng thái cập nhật sẽ được lưu lại tại đây.</p><a class="primary-btn" href="books.html">Tìm cuốn sách đầu tiên <i class="fa-solid fa-arrow-right"></i></a></div>
+    <p class="history-storage-note"><i class="fa-solid fa-circle-info"></i> Lịch sử hiện được lưu trên thiết bị này và chưa đồng bộ với máy chủ.</p>
+  </section>
+  <nav class="history-shortcuts" aria-label="Điều hướng tài khoản"><a href="borrowed.html"><i class="fa-solid fa-book-open"></i> Sách đang mượn</a><a href="profile.html"><i class="fa-regular fa-user"></i> Trang cá nhân</a></nav>
+</main>
+<div id="site-footer"></div>
+<script src="script.js"></script>
+</body>
+</html>

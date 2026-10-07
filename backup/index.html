@@ -3,64 +3,289 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bookin - Thư viện hiện đại</title>
+<title>BOOKIN - Phần mềm Quản lý Thư viện</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
-<body>
-<div id="site-header"></div>
+<body class="app-body">
 
-<main>
-<section class="hero">
-    <div class="hero-content">
-        <span class="hero-label"><i class="fa-solid fa-sparkles"></i> CHÀO MỪNG ĐẾN VỚI BOOKIN</span>
-        <h1>Khám phá thế giới<br><span>qua từng trang sách.</span></h1>
-        <p>Tìm kiếm những cuốn sách bạn yêu thích, khám phá tri thức mới và tạo nên hành trình đọc sách của riêng bạn.</p>
-        <div class="hero-buttons">
-            <a href="books.html" class="primary-btn">Khám phá sách <i class="fa-solid fa-arrow-right"></i></a>
-            <a href="register.html" class="secondary-btn">Tạo tài khoản</a>
+<div class="app-container">
+  <!-- Left Sidebar Navigation -->
+  <aside class="app-sidebar" id="appSidebar">
+    <div class="sidebar-brand">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="width:36px;height:36px;background:var(--orange);border-radius:10px;display:grid;place-items:center;color:#fff;font-size:16px;">
+          <i class="fa-solid fa-book-open"></i>
         </div>
-        <div class="stats">
-            <div class="stat"><strong>1,200+</strong><span>Đầu sách</span></div>
-            <div class="stat"><strong>500+</strong><span>Độc giả</span></div>
-            <div class="stat"><strong>30+</strong><span>Thể loại</span></div>
+        <div>
+          <strong>BOOKIN</strong>
+          <span>Library Management</span>
         </div>
+      </div>
     </div>
-    <div class="hero-image">
-        <div class="image-card"><img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=900&q=80" alt="Thư viện Bookin"></div>
-        <div class="floating-card card-one"><div class="floating-icon"><i class="fa-solid fa-book"></i></div><div><strong>1,200+</strong><span>Cuốn sách</span></div></div>
-        <div class="floating-card card-two"><i class="fa-solid fa-star"></i><div><strong>4.9/5</strong><span>Đánh giá</span></div></div>
+
+    <nav class="sidebar-nav" role="tablist">
+      <button class="sidebar-nav-item is-active" data-app-tab="overview" type="button">
+        <i class="fa-solid fa-house"></i> <span>Tổng quan</span>
+      </button>
+      <button class="sidebar-nav-item" data-app-tab="books" type="button">
+        <i class="fa-solid fa-boxes-stacked"></i> <span>Quản lý sách</span>
+      </button>
+      <button class="sidebar-nav-item" data-app-tab="borrowers" type="button">
+        <i class="fa-solid fa-users"></i> <span>Người mượn</span>
+      </button>
+      <button class="sidebar-nav-item" data-app-tab="transactions" type="button">
+        <i class="fa-solid fa-right-left"></i> <span>Mượn / Trả</span>
+      </button>
+      <button class="sidebar-nav-item" data-app-tab="history" type="button">
+        <i class="fa-solid fa-receipt"></i> <span>Lịch sử</span>
+      </button>
+      <button class="sidebar-nav-item" data-app-tab="statistics" type="button">
+        <i class="fa-solid fa-chart-pie"></i> <span>Thống kê</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar">C</div>
+        <div class="sidebar-user-info">
+          <strong>Chủ thư viện</strong>
+          <small>admin@bookin.vn</small>
+        </div>
+      </div>
+      <button class="sidebar-logout" id="appLogoutBtn" type="button">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Đăng xuất</span>
+      </button>
     </div>
-</section>
+  </aside>
 
-<section class="features" id="about">
-    <div class="section-heading"><span>BOOKIN FEATURES</span><h2>Mọi thứ bạn cần<br>cho hành trình đọc sách</h2></div>
-    <div class="feature-grid">
-        <div class="feature-card"><div class="feature-icon orange"><i class="fa-solid fa-book"></i></div><h3>Kho sách phong phú</h3><p>Khám phá hàng nghìn đầu sách thuộc nhiều thể loại khác nhau.</p><a href="books.html">Xem kho sách <i class="fa-solid fa-arrow-right"></i></a></div>
-        <div class="feature-card"><div class="feature-icon green"><i class="fa-solid fa-magnifying-glass"></i></div><h3>Tìm kiếm dễ dàng</h3><p>Tìm sách nhanh chóng theo tên, tác giả hoặc thể loại.</p><a href="books.html">Tìm sách <i class="fa-solid fa-arrow-right"></i></a></div>
-        <div class="feature-card"><div class="feature-icon purple"><i class="fa-solid fa-heart"></i></div><h3>Sách yêu thích</h3><p>Lưu lại những cuốn sách yêu thích để đọc lại bất cứ lúc nào.</p><a href="books.html">Khám phá <i class="fa-solid fa-arrow-right"></i></a></div>
-        <div class="feature-card"><div class="feature-icon blue"><i class="fa-solid fa-book-open"></i></div><h3>Quản lý mượn sách</h3><p>Theo dõi trạng thái sách và thông tin mượn trả trực quan.</p><a href="books.html">Xem thêm <i class="fa-solid fa-arrow-right"></i></a></div>
+  <!-- Main Content Panel -->
+  <main class="app-main">
+    <header class="app-header">
+      <button class="mobile-sidebar-toggle" id="mobileSidebarToggle" type="button" aria-label="Menu">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="app-header-welcome">
+        <h2 id="appHeaderTitle">Xin chào, Chủ thư viện 👋</h2>
+        <p id="appHeaderSubtitle">Tổng quan hoạt động thư viện hôm nay</p>
+      </div>
+      <div class="app-header-actions">
+        <button id="appQuickLoanBtn" class="primary-btn" type="button" style="padding:10px 16px;font-size:12px;background:#238b65;cursor:pointer;">
+          <i class="fa-solid fa-plus-circle"></i> Tạo phiếu mượn
+        </button>
+      </div>
+    </header>
+
+    <!-- SECTION 1: TỔNG QUAN (DASHBOARD) -->
+    <section id="section-overview" class="app-section is-active">
+      <div class="dashboard-stat-grid">
+        <article class="dashboard-stat-card">
+          <div class="dashboard-stat-icon books"><i class="fa-solid fa-boxes-stacked"></i></div>
+          <div class="dashboard-stat-info">
+            <strong id="dashTotalCopies">0</strong>
+            <span>Tổng sách trong kho</span>
+          </div>
+        </article>
+        <article class="dashboard-stat-card">
+          <div class="dashboard-stat-icon available"><i class="fa-solid fa-book"></i></div>
+          <div class="dashboard-stat-info">
+            <strong id="dashAvailableCopies">0</strong>
+            <span>Có sẵn trên kệ</span>
+          </div>
+        </article>
+        <article class="dashboard-stat-card">
+          <div class="dashboard-stat-icon borrowed"><i class="fa-solid fa-right-left"></i></div>
+          <div class="dashboard-stat-info">
+            <strong id="dashBorrowedCount">0</strong>
+            <span>Đang mượn</span>
+          </div>
+        </article>
+        <article class="dashboard-stat-card">
+          <div class="dashboard-stat-icon overdue"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div class="dashboard-stat-info">
+            <strong id="dashOverdueCount">0</strong>
+            <span>Khoản mượn quá hạn</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="dashboard-two-col">
+        <!-- Bảng 1: Sách sắp hết -->
+        <div class="dashboard-panel">
+          <div class="dashboard-panel-header">
+            <h3><i class="fa-solid fa-triangle-exclamation" style="color:var(--orange);margin-right:8px;"></i> Sách sắp hết trên kệ</h3>
+            <button type="button" class="clear-btn" onclick="switchAppTab('books')" style="font-size:11px;">Xem tất cả <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+          <div id="dashLowStockTableWrap" class="admin-table-wrap"></div>
+        </div>
+
+        <!-- Bảng 2: Mượn gần đây -->
+        <div class="dashboard-panel">
+          <div class="dashboard-panel-header">
+            <h3><i class="fa-solid fa-clock-rotate-left" style="color:#4b78c2;margin-right:8px;"></i> Mượn gần đây</h3>
+            <button type="button" class="clear-btn" onclick="switchAppTab('transactions')" style="font-size:11px;">Xem tất cả <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+          <div id="dashRecentLoansWrap" class="admin-table-wrap"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: QUẢN LÝ SÁCH -->
+    <section id="section-books" class="app-section">
+      <div class="admin-workspace">
+        <div class="admin-toolbar">
+          <button id="appAddBookBtn" class="admin-add-book" type="button"><i class="fa-solid fa-plus"></i> Nhập sách mới</button>
+          <div class="admin-filters" style="width:100%;">
+            <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBookSearch" type="search" placeholder="Tìm theo tên sách, tác giả, thể loại..."></label>
+            <select id="appBookCategoryFilter"><option value="all">Tất cả thể loại</option></select>
+          </div>
+        </div>
+        <div id="appBookTableWrap" class="admin-table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 3: NGƯỜI MƯỢN -->
+    <section id="section-borrowers" class="app-section">
+      <div class="admin-workspace">
+        <div class="admin-toolbar">
+          <button id="appAddBorrowerBtn" class="admin-add-book" type="button" style="background:#4b78c2;border-color:#4b78c2;"><i class="fa-solid fa-user-plus"></i> Thêm người mượn</button>
+          <div class="admin-filters" style="width:100%;">
+            <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBorrowerSearch" type="search" placeholder="Tìm tên, email, mã độc giả..."></label>
+          </div>
+        </div>
+        <div id="appBorrowerTableWrap" class="admin-table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 4: MƯỢN / TRẢ -->
+    <section id="section-transactions" class="app-section">
+      <div class="admin-workspace">
+        <div class="admin-toolbar">
+          <button id="appNewLoanBtn" class="admin-add-book" type="button" style="background:#238b65;border-color:#238b65;"><i class="fa-solid fa-file-circle-plus"></i> Tạo phiếu mượn tại quầy</button>
+          <div class="admin-filters">
+            <label class="admin-search"><i class="fa-solid fa-magnifying-glass"></i><input id="appLoanSearch" type="search" placeholder="Tìm phiếu, người mượn, sách..."></label>
+            <select id="appLoanStatusFilter">
+              <option value="all">Tất cả trạng thái</option>
+              <option value="active">Đang mượn</option>
+              <option value="overdue">Quá hạn</option>
+              <option value="returned">Đã trả</option>
+            </select>
+          </div>
+        </div>
+        <div id="appLoanTableWrap" class="admin-table-wrap"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 5: LỊCH SỬ -->
+    <section id="section-history" class="app-section">
+      <div class="admin-workspace">
+        <div class="admin-toolbar">
+          <div style="font-weight:700;font-size:13px;color:var(--ink);"><i class="fa-solid fa-receipt"></i> Nhật ký hoạt động toàn hệ thống</div>
+        </div>
+        <div id="appHistoryWrap" class="admin-table-wrap" style="padding:15px;"></div>
+      </div>
+    </section>
+
+    <!-- SECTION 6: THỐNG KÊ -->
+    <section id="section-statistics" class="app-section">
+      <div class="dashboard-two-col">
+        <div class="dashboard-panel">
+          <div class="dashboard-panel-header">
+            <h3><i class="fa-solid fa-chart-pie" style="color:var(--orange);margin-right:8px;"></i> Tỷ lệ phân bố thể loại sách</h3>
+          </div>
+          <div id="appStatCategoryWrap"></div>
+        </div>
+        <div class="dashboard-panel">
+          <div class="dashboard-panel-header">
+            <h3><i class="fa-solid fa-triangle-exclamation" style="color:#a45448;margin-right:8px;"></i> Các khoản mượn quá hạn cần nhắc</h3>
+          </div>
+          <div id="appStatOverdueWrap" class="admin-table-wrap"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Modal Dialogs -->
+<!-- Dialog Thêm/Sửa Sách -->
+<dialog id="appBookDialog" class="admin-book-dialog">
+  <form id="appBookForm" class="admin-book-form">
+    <div class="admin-book-dialog-heading">
+      <div><span>BOOKIN CATALOG</span><h2 id="appBookDialogTitle">Thêm đầu sách mới</h2></div>
+      <button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
     </div>
-</section>
-
-<section class="books-section" id="books">
-    <div class="section-top"><div><span>SÁCH NỔI BẬT</span><h2>Được độc giả yêu thích</h2></div><a href="books.html" class="view-all">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a></div>
-    <div class="book-grid" id="featuredBooks"></div>
-</section>
-
-<section class="category-section" id="category">
-    <div class="category-content"><span>KHÁM PHÁ</span><h2>Tìm thể loại phù hợp với bạn</h2><p>Mỗi cuốn sách là một hành trình. Hãy chọn nơi bạn muốn bắt đầu.</p></div>
-    <div class="category-list">
-        <a href="books.html?category=Văn học"><i class="fa-solid fa-feather"></i><span>Văn học</span><small>245 sách</small></a>
-        <a href="books.html?category=Kinh tế"><i class="fa-solid fa-chart-line"></i><span>Kinh tế</span><small>180 sách</small></a>
-        <a href="books.html?category=Công nghệ"><i class="fa-solid fa-code"></i><span>Công nghệ</span><small>156 sách</small></a>
-        <a href="books.html?category=Kỹ năng sống"><i class="fa-solid fa-lightbulb"></i><span>Kỹ năng sống</span><small>210 sách</small></a>
+    <input id="appBookId" name="id" type="hidden">
+    <div class="admin-form-grid">
+      <label class="admin-form-wide">Tên sách<input id="appBookTitle" name="title" type="text" required></label>
+      <label>Tác giả<input id="appBookAuthor" name="author" type="text" required></label>
+      <label>Thể loại<select id="appBookCategory" name="category" required></select></label>
+      <label>Tổng số cuốn trong kho (Total Stock)<input id="appBookTotalQuantity" name="totalQuantity" type="number" min="1" value="5" required></label>
+      <label>Số cuốn đang rảnh trên kệ (Available Stock)<input id="appBookAvailableQuantity" name="availableQuantity" type="number" min="0" value="4" required></label>
+      <label>Năm xuất bản<input id="appBookYear" name="year" type="number" value="2024" required></label>
+      <label>Số trang<input id="appBookPages" name="pages" type="number" value="300" required></label>
+      <label class="admin-form-wide">URL ảnh bìa<input id="appBookImage" name="image" type="url" placeholder="https://..."></label>
     </div>
-</section>
+    <div class="admin-book-dialog-actions" style="margin-top:20px;">
+      <button class="admin-dialog-cancel" type="button">Hủy</button>
+      <button class="admin-dialog-save" type="submit">Lưu sách</button>
+    </div>
+  </form>
+</dialog>
 
-<section class="quote-section"><div class="quote-box"><i class="fa-solid fa-quote-left"></i><h2>“Một căn phòng không có sách giống như một cơ thể không có linh hồn.”</h2><p>— Marcus Tullius Cicero</p><a href="books.html" class="primary-btn">Bắt đầu khám phá <i class="fa-solid fa-arrow-right"></i></a></div></section>
-</main>
-<div id="site-footer"></div>
+<!-- Dialog Tạo phiếu mượn tại quầy -->
+<dialog id="appLoanDialog" class="admin-book-dialog">
+  <form id="appLoanForm" class="admin-book-form">
+    <div class="admin-book-dialog-heading">
+      <div><span>NGHIỆP VỤ TẠI QUẦY</span><h2>TẠO PHIẾU MƯỢN</h2></div>
+      <button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="admin-form-grid">
+      <label class="admin-form-wide">Người mượn
+        <select id="appLoanReaderSelect" name="readerId" required>
+          <option value="">-- Chọn người mượn --</option>
+        </select>
+      </label>
+      <label class="admin-form-wide">Sách
+        <select id="appLoanBookSelect" name="bookId" required>
+          <option value="">-- Chọn sách --</option>
+        </select>
+      </label>
+      <label class="admin-form-wide">Số lượng
+        <input type="number" id="appLoanQuantity" name="quantity" value="1" min="1" max="10" required>
+      </label>
+      <label>Ngày mượn
+        <input type="date" id="appLoanBorrowDate" name="borrowDate" required>
+      </label>
+      <label>Hạn trả
+        <input type="date" id="appLoanDueDate" name="dueDate" required>
+      </label>
+    </div>
+    <p id="appLoanMessage" class="admin-form-message"></p>
+    <div class="admin-book-dialog-actions" style="margin-top:20px;justify-content:center;">
+      <button class="admin-dialog-cancel" type="button">Hủy</button>
+      <button class="admin-dialog-save" type="submit" style="background:#238b65;border-color:#238b65;padding:12px 28px;font-size:13px;">XÁC NHẬN MƯỢN</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Dialog Thêm người mượn mới -->
+<dialog id="appBorrowerDialog" class="admin-book-dialog">
+  <form id="appBorrowerForm" class="admin-book-form">
+    <div class="admin-book-dialog-heading">
+      <div><span>THÀNH VIÊN THƯ VIỆN</span><h2>Thêm người mượn mới</h2></div>
+      <button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="admin-form-grid">
+      <label class="admin-form-wide">Họ và tên<input id="appBorrowerName" name="name" type="text" placeholder="Nguyễn Văn A" required></label>
+      <label class="admin-form-wide">Email liên hệ<input id="appBorrowerEmail" name="email" type="email" placeholder="nguyenvana@gmail.com" required></label>
+    </div>
+    <div class="admin-book-dialog-actions" style="margin-top:20px;">
+      <button class="admin-dialog-cancel" type="button">Hủy</button>
+      <button class="admin-dialog-save" type="submit">Thêm người mượn</button>
+    </div>
+  </form>
+</dialog>
+
 <script src="script.js"></script>
 </body>
 </html>

@@ -1,19 +1,5 @@
-# Bookin - Phần giao diện sách
+# Bookin
 
-Phạm vi gồm đúng 14 phần:
-1. Cấu trúc thư mục
-2. Trang chủ
-3. Header + Menu
-4. Footer
-5. Danh sách sách
-6. Chi tiết sách
-7. Dữ liệu sách mẫu
-8. Hiển thị sách bằng JavaScript
-9. Tìm kiếm
-10. Lọc thể loại
-11. Trạng thái sách
-12. Không tìm thấy sách
-13. CSS các trang sách
-14. Responsive
+Hướng dẫn cài đặt, khởi chạy và kịch bản demo nằm trong [README ở thư mục gốc](../README.md).
 
-Chạy: mở `index.html` bằng Live Server trong VS Code.
+Chạy các lệnh từ thư mục có `package.json` và `db.json`.

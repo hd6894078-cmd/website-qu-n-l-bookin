@@ -85,6 +85,7 @@ const bookinApi = {
   deleteBorrower(id) { return this.request(`/borrowers/${encodeURIComponent(id)}`, { method: "DELETE" }); },
 
   getBorrowings() { return this.list("/borrowings"); },
+  getBorrowing(id) { return this.request(`/borrowings/${encodeURIComponent(id)}`); },
   createBorrowing(data) { return this.request("/borrowings", { method: "POST", body: data }); },
   updateBorrowing(id, data) { return this.request(`/borrowings/${encodeURIComponent(id)}`, { method: "PATCH", body: data }); },
   deleteBorrowing(id) { return this.request(`/borrowings/${encodeURIComponent(id)}`, { method: "DELETE" }); },

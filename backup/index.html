@@ -168,7 +168,7 @@
         <div class="admin-toolbar">
           <button id="appAddBorrowerBtn" class="admin-add-book" type="button" style="background:#4b78c2;border-color:#4b78c2;"><i class="fa-solid fa-user-plus"></i> Thêm người mượn</button>
           <div class="admin-filters" style="width:100%;">
-            <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBorrowerSearch" type="search" placeholder="Tìm tên, email, mã người mượn..."></label>
+            <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBorrowerSearch" type="search" placeholder="Tìm tên, mã, số điện thoại hoặc email..."></label>
           </div>
         </div>
         <div id="appBorrowerTableWrap" class="admin-table-wrap"></div>
@@ -280,7 +280,7 @@
         </select>
       </label>
       <label class="admin-form-wide">Số lượng
-        <input type="number" id="appLoanQuantity" name="quantity" value="1" min="1" max="10" required>
+        <input type="number" id="appLoanQuantity" name="quantity" value="1" min="1" step="1" required>
       </label>
       <label>Ngày mượn
         <input type="date" id="appLoanBorrowDate" name="borrowDate" required>
@@ -301,18 +301,31 @@
 <dialog id="appBorrowerDialog" class="admin-book-dialog">
   <form id="appBorrowerForm" class="admin-book-form">
     <div class="admin-book-dialog-heading">
-      <div><span>THÀNH VIÊN THƯ VIỆN</span><h2>Thêm người mượn mới</h2></div>
+      <div><span>HỒ SƠ NGƯỜI MƯỢN</span><h2 id="appBorrowerDialogTitle">Thêm người mượn mới</h2></div>
       <button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
     </div>
+    <input id="appBorrowerId" name="id" type="hidden">
     <div class="admin-form-grid">
       <label class="admin-form-wide">Họ và tên<input id="appBorrowerName" name="name" type="text" placeholder="Nguyễn Văn A" required></label>
-      <label class="admin-form-wide">Email liên hệ<input id="appBorrowerEmail" name="email" type="email" placeholder="nguyenvana@gmail.com" required></label>
+      <label>Số điện thoại<input id="appBorrowerPhone" name="phone" type="tel" autocomplete="tel" placeholder="09xxxxxxxx"></label>
+      <label>Email liên hệ<input id="appBorrowerEmail" name="email" type="email" autocomplete="email" placeholder="nguyenvana@example.com"></label>
     </div>
     <div class="admin-book-dialog-actions" style="margin-top:20px;">
       <button class="admin-dialog-cancel" type="button">Hủy</button>
-      <button class="admin-dialog-save" type="submit">Thêm người mượn</button>
+      <button id="appBorrowerSaveBtn" class="admin-dialog-save" type="submit">Thêm người mượn</button>
     </div>
   </form>
+</dialog>
+
+<dialog id="appBorrowerDetailDialog" class="admin-book-dialog">
+  <div class="admin-book-form">
+    <div class="admin-book-dialog-heading">
+      <div><span>HỒ SƠ NGƯỜI MƯỢN</span><h2 id="appBorrowerDetailTitle">Thông tin người mượn</h2></div>
+      <button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="appBorrowerDetailContent" class="admin-form-grid"></div>
+    <div class="admin-book-dialog-actions"><button class="admin-dialog-cancel" type="button">Đóng</button></div>
+  </div>
 </dialog>
 
 <script src="api.js"></script>

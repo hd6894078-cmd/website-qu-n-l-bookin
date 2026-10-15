@@ -25,14 +25,14 @@
       <p id="adminLoginMessage" class="admin-login-message" role="status" aria-live="polite"></p>
       <button id="adminLoginSubmit" type="submit">Vào trang quản trị <i class="fa-solid fa-arrow-right"></i></button>
     </form>
-    <div class="admin-login-demo"><strong>Tài khoản dùng thử</strong><span>Email: admin@bookin.vn</span><span>Mật khẩu: Bookin@123</span></div>
-    <small class="admin-login-note">Tài khoản mẫu phục vụ trình diễn học phần.</small>
+    <div class="admin-login-demo"><strong>Đăng nhập mô phỏng MVP</strong><span>Thông tin được đối chiếu với tài khoản quản trị mẫu từ JSON Server.</span></div>
+    <small class="admin-login-note">Đây là cơ chế mô phỏng phía frontend, không dùng mật khẩu thật và không thay thế xác thực bảo mật ở backend.</small>
   </section>
 </main>
 
-<div id="site-header"></div>
+<div id="site-header" hidden></div>
 
-<main class="register-main">
+<main class="register-main" hidden>
   <section class="register-layout login-layout" aria-labelledby="loginTitle">
     <div class="register-story login-story">
       <span class="register-eyebrow"><i class="fa-solid fa-book-open"></i> BOOKIN READING CLUB</span>
@@ -86,13 +86,13 @@
         <p id="loginMessage" class="register-message" role="status" aria-live="polite"></p>
       </form>
 
-      <p class="register-login">Chưa tham gia Bookin? <a href="register.html">Tạo tài khoản</a></p>
+      <p class="register-login">Cổng Bookin chỉ dành cho Admin/chủ thư viện.</p>
       <a class="register-back" href="index.html"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Quay về trang chủ</a>
     </div>
   </section>
 </main>
 
-<div id="site-footer"></div>
+<div id="site-footer" hidden></div>
 
 <script src="api.js"></script>
 <script src="admin-auth.js"></script>

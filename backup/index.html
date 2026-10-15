@@ -19,7 +19,7 @@
         </div>
         <div>
           <strong>BOOKIN</strong>
-          <span>Library Management</span>
+          <span>QUẢN LÝ THƯ VIỆN</span>
         </div>
       </div>
     </div>
@@ -47,10 +47,10 @@
 
     <div class="sidebar-footer">
       <div class="sidebar-user">
-        <div class="sidebar-user-avatar">C</div>
+        <div class="sidebar-user-avatar" id="appAdminAvatar">C</div>
         <div class="sidebar-user-info">
-          <strong>Chủ thư viện</strong>
-          <small>admin@bookin.vn</small>
+          <strong id="appAdminName">Chủ thư viện</strong>
+          <small id="appAdminEmail">admin@bookin.vn</small>
         </div>
       </div>
       <button class="sidebar-logout" id="appLogoutBtn" type="button">
@@ -66,24 +66,41 @@
         <i class="fa-solid fa-bars"></i>
       </button>
       <div class="app-header-welcome">
-        <h2 id="appHeaderTitle">Xin chào, Chủ thư viện 👋</h2>
+        <h2 id="appHeaderTitle">Xin chào, Chủ thư viện</h2>
         <p id="appHeaderSubtitle">Tổng quan hoạt động thư viện hôm nay</p>
       </div>
       <div class="app-header-actions">
+        <span id="appApiStatus" class="app-api-status is-loading" role="status" aria-live="polite">Đang kết nối dữ liệu</span>
         <button id="appQuickLoanBtn" class="primary-btn" type="button" style="padding:10px 16px;font-size:12px;background:#238b65;cursor:pointer;">
           <i class="fa-solid fa-plus-circle"></i> Tạo phiếu mượn
         </button>
       </div>
     </header>
 
+    <aside id="appApiNotice" class="api-notice" role="alert" hidden>
+      <div class="api-notice-icon"><i class="fa-solid fa-plug-circle-xmark"></i></div>
+      <div class="api-notice-copy">
+        <strong>Chưa kết nối được máy chủ JSON Server</strong>
+        <p>Dữ liệu chưa tải nên các chỉ số đang để trống. Mở cửa sổ dòng lệnh tại thư mục dự án, chạy <code>npm run server</code>, rồi chọn <strong>Thử lại</strong>.</p>
+      </div>
+      <button id="appApiRetry" type="button"><i class="fa-solid fa-rotate"></i> Thử lại</button>
+    </aside>
+
     <!-- SECTION 1: TỔNG QUAN (DASHBOARD) -->
     <section id="section-overview" class="app-section is-active">
       <div class="dashboard-stat-grid">
         <article class="dashboard-stat-card">
+          <div class="dashboard-stat-icon titles"><i class="fa-solid fa-book-open"></i></div>
+          <div class="dashboard-stat-info">
+            <strong id="dashTitleCount">0</strong>
+            <span>Đầu sách</span>
+          </div>
+        </article>
+        <article class="dashboard-stat-card">
           <div class="dashboard-stat-icon books"><i class="fa-solid fa-boxes-stacked"></i></div>
           <div class="dashboard-stat-info">
             <strong id="dashTotalCopies">0</strong>
-            <span>Tổng sách trong kho</span>
+            <span>Tổng số bản sách</span>
           </div>
         </article>
         <article class="dashboard-stat-card">
@@ -150,7 +167,7 @@
         <div class="admin-toolbar">
           <button id="appAddBorrowerBtn" class="admin-add-book" type="button" style="background:#4b78c2;border-color:#4b78c2;"><i class="fa-solid fa-user-plus"></i> Thêm người mượn</button>
           <div class="admin-filters" style="width:100%;">
-            <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBorrowerSearch" type="search" placeholder="Tìm tên, email, mã độc giả..."></label>
+            <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBorrowerSearch" type="search" placeholder="Tìm tên, email, mã người mượn..."></label>
           </div>
         </div>
         <div id="appBorrowerTableWrap" class="admin-table-wrap"></div>
@@ -208,10 +225,21 @@
 
 <!-- Modal Dialogs -->
 <!-- Dialog Thêm/Sửa Sách -->
+<dialog id="appBookDetailDialog" class="admin-book-dialog">
+  <div class="admin-book-form">
+    <div class="admin-book-dialog-heading">
+      <div><span>CHI TIẾT KHO SÁCH</span><h2 id="appBookDetailTitle">Thông tin đầu sách</h2></div>
+      <button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="appBookDetailContent" class="admin-form-grid"></div>
+    <div class="admin-book-dialog-actions"><button class="admin-dialog-cancel" type="button">Đóng</button></div>
+  </div>
+</dialog>
+
 <dialog id="appBookDialog" class="admin-book-dialog">
   <form id="appBookForm" class="admin-book-form">
     <div class="admin-book-dialog-heading">
-      <div><span>BOOKIN CATALOG</span><h2 id="appBookDialogTitle">Thêm đầu sách mới</h2></div>
+      <div><span>KHO SÁCH BOOKIN</span><h2 id="appBookDialogTitle">Thêm đầu sách mới</h2></div>
       <button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <input id="appBookId" name="id" type="hidden">
@@ -219,11 +247,11 @@
       <label class="admin-form-wide">Tên sách<input id="appBookTitle" name="title" type="text" required></label>
       <label>Tác giả<input id="appBookAuthor" name="author" type="text" required></label>
       <label>Thể loại<select id="appBookCategory" name="category" required></select></label>
-      <label>Tổng số cuốn trong kho (Total Stock)<input id="appBookTotalQuantity" name="totalQuantity" type="number" min="1" value="5" required></label>
-      <label>Số cuốn đang rảnh trên kệ (Available Stock)<input id="appBookAvailableQuantity" name="availableQuantity" type="number" min="0" value="4" required></label>
+      <label>Tổng số bản trong kho<input id="appBookTotalQuantity" name="totalQuantity" type="number" min="1" value="5" required></label>
+      <label>Số bản có sẵn trên kệ<input id="appBookAvailableQuantity" name="availableQuantity" type="number" min="0" value="4" required></label>
       <label>Năm xuất bản<input id="appBookYear" name="year" type="number" value="2024" required></label>
       <label>Số trang<input id="appBookPages" name="pages" type="number" value="300" required></label>
-      <label class="admin-form-wide">URL ảnh bìa<input id="appBookImage" name="image" type="url" placeholder="https://..."></label>
+      <label class="admin-form-wide">Đường dẫn ảnh bìa<input id="appBookImage" name="image" type="url" placeholder="https://..."></label>
     </div>
     <div class="admin-book-dialog-actions" style="margin-top:20px;">
       <button class="admin-dialog-cancel" type="button">Hủy</button>

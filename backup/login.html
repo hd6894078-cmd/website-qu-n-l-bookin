@@ -4,11 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#faf8f3">
-    <title>Đăng nhập - Bookin Library</title>
+    <title>Đăng nhập quản trị - Bookin</title>
+    <style>#site-header,#site-footer,.register-main{display:none!important}</style>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body class="register-page login-page">
+
+<main class="admin-login-shell">
+  <section class="admin-login-card" aria-labelledby="adminLoginTitle">
+    <a class="admin-login-brand" href="index.html" aria-label="Bookin quản lý thư viện"><span><i class="fa-solid fa-book-open"></i></span><strong>BOOKIN</strong></a>
+    <p class="admin-login-eyebrow">CỔNG QUẢN TRỊ THƯ VIỆN</p>
+    <h1 id="adminLoginTitle">Đăng nhập</h1>
+    <p class="admin-login-intro">Dành riêng cho chủ thư viện và người quản trị.</p>
+    <form id="adminLoginForm" class="admin-login-form">
+      <label for="adminLoginEmail">Email quản trị</label>
+      <input id="adminLoginEmail" name="email" type="email" autocomplete="username" placeholder="admin@bookin.vn" required>
+      <label for="adminLoginPassword">Mật khẩu</label>
+      <div class="admin-login-password"><input id="adminLoginPassword" name="password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu quản trị" required><button type="button" id="adminPasswordToggle" aria-label="Hiện mật khẩu"><i class="fa-regular fa-eye"></i></button></div>
+      <p id="adminLoginMessage" class="admin-login-message" role="status" aria-live="polite"></p>
+      <button id="adminLoginSubmit" type="submit">Vào trang quản trị <i class="fa-solid fa-arrow-right"></i></button>
+    </form>
+    <div class="admin-login-demo"><strong>Tài khoản dùng thử</strong><span>Email: admin@bookin.vn</span><span>Mật khẩu: Bookin@123</span></div>
+    <small class="admin-login-note">Tài khoản mẫu phục vụ trình diễn học phần.</small>
+  </section>
+</main>
 
 <div id="site-header"></div>
 
@@ -74,6 +94,7 @@
 
 <div id="site-footer"></div>
 
-<script src="script.js"></script>
+<script src="api.js"></script>
+<script src="admin-auth.js"></script>
 </body>
 </html>

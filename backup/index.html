@@ -199,6 +199,10 @@
       <div class="admin-workspace">
         <div class="admin-toolbar">
           <div style="font-weight:700;font-size:13px;color:var(--ink);"><i class="fa-solid fa-receipt"></i> Nhật ký hoạt động toàn hệ thống</div>
+          <div class="admin-filters">
+            <label class="admin-search"><i class="fa-solid fa-magnifying-glass"></i><input id="appHistorySearch" type="search" placeholder="Tìm hành động, sách, người mượn..."></label>
+            <select id="appHistoryFilter" aria-label="Lọc lịch sử"><option value="all">Tất cả hoạt động</option><option value="borrow">Lập phiếu mượn</option><option value="return">Trả sách</option><option value="book">Quản lý sách</option></select>
+          </div>
         </div>
         <div id="appHistoryWrap" class="admin-table-wrap" style="padding:15px;"></div>
       </div>
@@ -206,6 +210,7 @@
 
     <!-- SECTION 6: THỐNG KÊ -->
     <section id="section-statistics" class="app-section">
+      <div id="appStatSummaryWrap" class="dashboard-stat-grid"></div>
       <div class="dashboard-two-col">
         <div class="dashboard-panel">
           <div class="dashboard-panel-header">
@@ -218,6 +223,12 @@
             <h3><i class="fa-solid fa-triangle-exclamation" style="color:#a45448;margin-right:8px;"></i> Các khoản mượn quá hạn cần nhắc</h3>
           </div>
           <div id="appStatOverdueWrap" class="admin-table-wrap"></div>
+        </div>
+        <div class="dashboard-panel">
+          <div class="dashboard-panel-header">
+            <h3><i class="fa-solid fa-ranking-star" style="color:var(--orange);margin-right:8px;"></i> Sách được mượn nhiều</h3>
+          </div>
+          <div id="appStatPopularWrap" class="admin-table-wrap"></div>
         </div>
       </div>
     </section>

@@ -1,5 +1,5 @@
 # Bookin
 
-Hướng dẫn cài đặt, chạy frontend Admin, chạy JSON Server và kịch bản demo nằm trong [README ở thư mục gốc](../README.md).
+Hướng dẫn cài đặt, khởi chạy và kịch bản demo nằm trong [README ở thư mục gốc](../README.md).
 
-Chạy các lệnh tại thư mục gốc dự án, nơi có `package.json` và `db.json`.
+Chạy các lệnh từ thư mục có `package.json` và `db.json`.

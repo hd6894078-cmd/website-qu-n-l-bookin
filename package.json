@@ -8,7 +8,8 @@
     "dev:bookin": "vite backup",
     "server": "json-server db.json --port 3000",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:bookin": "vite backup"
   },
   "devDependencies": {
     "json-server": "^1.0.0-beta.15",

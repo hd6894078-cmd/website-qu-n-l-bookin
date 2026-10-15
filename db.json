@@ -638,6 +638,24 @@
       "userId": "Quản trị viên",
       "bookId": 2,
       "details": "Phạm Gia Huy mượn cuốn Nhà Giả Kim (4 cuốn)"
+    },
+    {
+      "action": "Cập nhật đầu sách",
+      "bookId": "2",
+      "bookTitle": "Nhà Giả Kim",
+      "details": "Nhà Giả Kim: 1/5 cuốn có sẵn.",
+      "userId": "Quản trị viên",
+      "date": "2026-10-15T09:26:55.294Z",
+      "id": "ULV_hlNyIFU"
+    },
+    {
+      "action": "Cập nhật đầu sách",
+      "bookId": "2",
+      "bookTitle": "Nhà Giả Kim",
+      "details": "Nhà Giả Kim: 1/5 cuốn có sẵn.",
+      "userId": "Quản trị viên",
+      "date": "2026-10-15T09:27:13.045Z",
+      "id": "jASWTRQJOLU"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

@@ -1,5 +1,6 @@
-/* Shared JSON Server client for the Bookin admin pages. */
-const API_BASE_URL = window.BOOKIN_API_BASE_URL || "http://localhost:3000";
+/* Lớp giao tiếp JSON Server dùng chung cho trang quản trị Bookin. */
+const API_HOST = window.location.hostname || "localhost";
+const API_BASE_URL = window.BOOKIN_API_BASE_URL || `${window.location.protocol}//${API_HOST}:3000`;
 
 class BookinApiError extends Error {
   constructor(message, { status = 0, endpoint = "", cause } = {}) {
@@ -35,7 +36,7 @@ const bookinApi = {
         try {
           data = JSON.parse(text);
         } catch (cause) {
-          throw new BookinApiError(`JSON Server returned invalid JSON for ${endpoint}.`, {
+          throw new BookinApiError(`JSON Server trả về dữ liệu không hợp lệ tại ${endpoint}.`, {
             status: response.status,
             endpoint,
             cause
@@ -44,7 +45,7 @@ const bookinApi = {
       }
       if (!response.ok) {
         const detail = typeof data === "string" ? data : data?.message || response.statusText;
-        throw new BookinApiError(`API ${method} ${endpoint} failed (${response.status}): ${detail}`, {
+        throw new BookinApiError(`Yêu cầu ${method} ${endpoint} thất bại (${response.status}): ${detail}`, {
           status: response.status,
           endpoint
         });
@@ -52,7 +53,7 @@ const bookinApi = {
       return data;
     } catch (error) {
       if (error instanceof BookinApiError) throw error;
-      throw new BookinApiError(`Cannot connect to JSON Server at ${this.baseUrl}. Start it with npm run server.`, {
+      throw new BookinApiError(`Không thể kết nối JSON Server tại ${this.baseUrl}. Hãy chạy npm run server trong thư mục dự án.`, {
         endpoint,
         cause: error
       });

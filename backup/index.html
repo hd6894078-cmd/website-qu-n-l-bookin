@@ -153,8 +153,9 @@
         <div class="admin-toolbar">
           <button id="appAddBookBtn" class="admin-add-book" type="button"><i class="fa-solid fa-plus"></i> Nhập sách mới</button>
           <div class="admin-filters" style="width:100%;">
-            <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBookSearch" type="search" placeholder="Tìm theo tên sách, tác giả, thể loại..."></label>
+            <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBookSearch" type="search" placeholder="Tìm theo mã hoặc tên sách..."></label>
             <select id="appBookCategoryFilter"><option value="all">Tất cả thể loại</option></select>
+            <select id="appBookStatusFilter" aria-label="Lọc theo trạng thái tồn kho"><option value="all">Tất cả trạng thái</option><option value="empty">Hết sách</option><option value="low">Sắp hết</option><option value="available">Còn sách</option></select>
           </div>
         </div>
         <div id="appBookTableWrap" class="admin-table-wrap"></div>
@@ -247,8 +248,8 @@
       <label class="admin-form-wide">Tên sách<input id="appBookTitle" name="title" type="text" required></label>
       <label>Tác giả<input id="appBookAuthor" name="author" type="text" required></label>
       <label>Thể loại<select id="appBookCategory" name="category" required></select></label>
-      <label>Tổng số bản trong kho<input id="appBookTotalQuantity" name="totalQuantity" type="number" min="1" value="5" required></label>
-      <label>Số bản có sẵn trên kệ<input id="appBookAvailableQuantity" name="availableQuantity" type="number" min="0" value="4" required></label>
+      <label>Tổng số bản trong kho<input id="appBookTotalQuantity" name="totalQuantity" type="number" min="0" step="1" value="5" required></label>
+      <label>Số bản có sẵn trên kệ<input id="appBookAvailableQuantity" name="availableQuantity" type="number" min="0" step="1" value="4" required></label>
       <label>Năm xuất bản<input id="appBookYear" name="year" type="number" value="2024" required></label>
       <label>Số trang<input id="appBookPages" name="pages" type="number" value="300" required></label>
       <label class="admin-form-wide">Đường dẫn ảnh bìa<input id="appBookImage" name="image" type="url" placeholder="https://..."></label>

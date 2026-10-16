@@ -1191,7 +1191,7 @@ function appSetApiState(message,isError=false){
   if(notice)notice.hidden=!isError;
   const unavailable=isError||message.includes("tải");["appQuickLoanBtn","appAddBookBtn","appAddBorrowerBtn","appNewLoanBtn"].forEach(id=>{const button=document.getElementById(id);if(button)button.disabled=unavailable;});
   if(isError)["dashTitleCount","dashTotalCopies","dashAvailableCopies","dashBorrowedCount","dashOverdueCount"].forEach(id=>{const node=document.getElementById(id);if(node)node.textContent="—";});
-  const ids=["appBookTableWrap","appBorrowerTableWrap","appLoanTableWrap","appHistoryWrap","dashLowStockTableWrap","dashRecentLoansWrap","appStatSummaryWrap","appStatCategoryWrap","appStatOverdueWrap","appStatPopularWrap"];
+  const ids=["appBookTableWrap","appBorrowerTableWrap","appLoanTableWrap","appHistoryWrap","dashLowStockTableWrap","dashRecentLoansWrap","dashOverdueLoansWrap","dashRecentActivityWrap","appStatSummaryWrap","appStatCategoryWrap","appStatOverdueWrap","appStatPopularWrap"];
   ids.forEach(id=>{const node=document.getElementById(id);if(node)node.innerHTML=`<p class="admin-empty" ${isError?'role="alert"':''}>${isError?"Dữ liệu sẽ xuất hiện sau khi kết nối JSON Server.":apiEscapeHTML(message)}</p>`;});
 }
 async function reloadAdminApiData(){
@@ -1227,13 +1227,33 @@ function switchApiAppTab(tabName){
   const renderers={overview:renderApiOverview,books:renderApiBooks,borrowers:renderApiBorrowers,transactions:renderApiTransactions,history:renderApiHistory,statistics:renderApiStatistics};
   renderers[tabName]?.();
 }
-function renderApiOverview(){
+function renderApiOverviewBase(){
   const loans=appLoanRows(),total=books.reduce((sum,b)=>sum+Number(b.totalQuantity||0),0),available=books.reduce((sum,b)=>sum+Number(b.availableQuantity||0),0),borrowed=loans.filter(isOpenBorrowing).reduce((sum,l)=>sum+Number(l.quantity||0),0),overdue=loans.filter(l=>l.isOverdue).length;
   const values={dashTitleCount:books.length,dashTotalCopies:total,dashAvailableCopies:available,dashBorrowedCount:borrowed,dashOverdueCount:overdue};Object.entries(values).forEach(([id,value])=>{const node=document.getElementById(id);if(node)node.textContent=value;});
   const low=books.filter(book=>Number(book.availableQuantity||0)<=2),lowWrap=document.getElementById("dashLowStockTableWrap");
   if(lowWrap)lowWrap.innerHTML=low.length?`<table><thead><tr><th>Sách</th><th>Tổng cuốn</th><th>Có sẵn</th><th></th></tr></thead><tbody>${low.map(book=>`<tr><td><strong>${apiEscapeHTML(book.title)}</strong><small>${apiEscapeHTML(book.author)}</small></td><td>${book.totalQuantity}</td><td>${book.availableQuantity}</td><td><button type="button" class="admin-action" onclick="openAppBookDialogForEdit('${apiEscapeHTML(book.id)}')">Điều chỉnh</button></td></tr>`).join("")}</tbody></table>`:'<p class="admin-empty">Không có sách sắp hết.</p>';
   const recent=loans.slice().sort((a,b)=>new Date(b.borrowDate)-new Date(a.borrowDate)).slice(0,5),recentWrap=document.getElementById("dashRecentLoansWrap"),readers=new Map(users.map(reader=>[String(reader.id),reader]));
   if(recentWrap)recentWrap.innerHTML=recent.length?`<table><thead><tr><th>Người mượn</th><th>Sách</th><th>Ngày mượn</th><th>Trạng thái</th></tr></thead><tbody>${recent.map(loan=>{const book=appBookById(loan.bookId),reader=readers.get(String(loan.borrowerId));return `<tr><td>${apiEscapeHTML(reader?.name||loan.borrowerName||"")}</td><td>${apiEscapeHTML(book?.title||loan.bookTitle||"")}</td><td>${apiEscapeHTML(loan.borrowDate||"")}</td><td>${loan.isOverdue?"Quá hạn":loan.status==="returned"?"Đã trả":"Đang mượn"}</td></tr>`;}).join("")}</tbody></table>`:'<p class="admin-empty">Chưa có phiếu mượn.</p>';
+}
+function renderApiOverview(){
+  renderApiOverviewBase();
+  const loans=appLoanRows(),readers=new Map(users.map(reader=>[String(reader.id),reader]));
+  const overdue=loans.filter(loan=>loan.isOverdue).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,5),overdueWrap=document.getElementById("dashOverdueLoansWrap");
+  if(overdueWrap)overdueWrap.innerHTML=overdue.length?`<table><thead><tr><th>Phiếu</th><th>Người mượn</th><th>Sách</th><th>Hạn trả</th><th></th></tr></thead><tbody>${overdue.map(loan=>{const reader=readers.get(String(loan.borrowerId)),book=appBookById(loan.bookId);return `<tr><td>${apiEscapeHTML(loan.id)}</td><td>${apiEscapeHTML(reader?.name||loan.borrowerName||"")}</td><td>${apiEscapeHTML(book?.title||loan.bookTitle||"")}</td><td>${apiEscapeHTML(loan.dueDate||"")}</td><td><button type="button" class="admin-action" onclick="openAppLoanRecord('${apiEscapeHTML(loan.id)}','overdue')">Mở phiếu</button></td></tr>`;}).join("")}</tbody></table>`:'<p class="admin-empty">Không có phiếu quá hạn.</p>';
+  const recentEvents=apiHistoryEvents().slice().sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).slice(0,5),activityWrap=document.getElementById("dashRecentActivityWrap");
+  if(activityWrap)activityWrap.innerHTML=recentEvents.length?`<table><thead><tr><th>Thời gian</th><th>Giao dịch</th><th>Liên quan</th><th></th></tr></thead><tbody>${recentEvents.map(event=>{const reader=readers.get(String(event.borrowerId)),when=event.date?new Date(event.date.length===10?`${event.date}T00:00:00`:event.date).toLocaleDateString("vi-VN"):"—",related=reader?.name||event.borrowerName||appBookById(event.bookId)?.title||event.bookTitle||"";return `<tr><td>${apiEscapeHTML(when)}</td><td>${apiEscapeHTML(event.action||"")}</td><td>${apiEscapeHTML(related)}</td><td><button type="button" class="admin-action" onclick="openAppHistoryRecord('${apiEscapeHTML(event.loanId||event.id||"")}')">Xem</button></td></tr>`;}).join("")}</tbody></table>`:'<p class="admin-empty">Chưa có giao dịch nào được ghi nhận.</p>';
+}
+function openAppLoanFilter(filter="all"){
+  const status=document.getElementById("appLoanStatusFilter"),search=document.getElementById("appLoanSearch");
+  if(status)status.value=filter;if(search)search.value="";switchAppTab("transactions");
+}
+function openAppLoanRecord(loanId,filter="all"){
+  const status=document.getElementById("appLoanStatusFilter"),search=document.getElementById("appLoanSearch");
+  if(status)status.value=filter;if(search)search.value=String(loanId||"");switchAppTab("transactions");
+}
+function openAppHistoryRecord(recordId){
+  const search=document.getElementById("appHistorySearch"),filter=document.getElementById("appHistoryFilter");
+  if(search)search.value=String(recordId||"");if(filter)filter.value="all";switchAppTab("history");
 }
 function renderApiBooks(){
   const wrap=document.getElementById("appBookTableWrap");if(!wrap)return;

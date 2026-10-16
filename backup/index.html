@@ -89,59 +89,25 @@
     <!-- SECTION 1: TỔNG QUAN (DASHBOARD) -->
     <section id="section-overview" class="app-section is-active">
       <div class="dashboard-stat-grid">
-       
-<article class="dashboard-stat-card"
-         onclick="switchAppTab('books')"
-         style="cursor: pointer;">
-  <div class="dashboard-stat-icon titles">
-    <i class="fa-solid fa-book-open"></i>
-  </div>
-  <div class="dashboard-stat-info">
-    <strong id="dashTitleCount">0</strong>
-    <span>Đầu sách</span>
-  </div>
-</article>
-
-        
-<article class="dashboard-stat-card"
-         onclick="switchAppTab('books')"
-         style="cursor: pointer;">
-  <div class="dashboard-stat-icon books">
-    <i class="fa-solid fa-boxes-stacked"></i>
-  </div>
-  <div class="dashboard-stat-info">
-    <strong id="dashTotalCopies">0</strong>
-    <span>Tổng số bản sách</span>
-  </div>
-</article>
-
-<article class="dashboard-stat-card"
-         onclick="switchAppTab('books')"
-         style="cursor: pointer;">
-
+        <article class="dashboard-stat-card dashboard-stat-card--link" role="link" tabindex="0" onclick="switchAppTab('books')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchAppTab('books')}">
+          <div class="dashboard-stat-icon titles"><i class="fa-solid fa-book-open"></i></div>
+          <div class="dashboard-stat-info"><strong id="dashTitleCount">0</strong><span>Đầu sách</span></div>
+        </article>
+        <article class="dashboard-stat-card dashboard-stat-card--link" role="link" tabindex="0" onclick="switchAppTab('books')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchAppTab('books')}">
+          <div class="dashboard-stat-icon books"><i class="fa-solid fa-boxes-stacked"></i></div>
+          <div class="dashboard-stat-info"><strong id="dashTotalCopies">0</strong><span>Tổng số bản sách</span></div>
+        </article>
+        <article class="dashboard-stat-card dashboard-stat-card--link" role="link" tabindex="0" onclick="switchAppTab('books')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();switchAppTab('books')}">
           <div class="dashboard-stat-icon available"><i class="fa-solid fa-book"></i></div>
-          <div class="dashboard-stat-info">
-            <strong id="dashAvailableCopies">0</strong>
-            <span>Có sẵn trên kệ</span>
-          </div>
+          <div class="dashboard-stat-info"><strong id="dashAvailableCopies">0</strong><span>Có sẵn trên kệ</span></div>
         </article>
-        <
-<article class="dashboard-stat-card"
-         onclick="switchAppTab('transactions')"
-         style="cursor: pointer;">
-
+        <article class="dashboard-stat-card dashboard-stat-card--link" role="link" tabindex="0" onclick="openAppLoanFilter('active')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openAppLoanFilter('active')}">
           <div class="dashboard-stat-icon borrowed"><i class="fa-solid fa-right-left"></i></div>
-          <div class="dashboard-stat-info">
-            <strong id="dashBorrowedCount">0</strong>
-            <span>Đang mượn</span>
-          </div>
+          <div class="dashboard-stat-info"><strong id="dashBorrowedCount">0</strong><span>Đang mượn</span></div>
         </article>
-        <article class="dashboard-stat-card">
+        <article class="dashboard-stat-card dashboard-stat-card--link" role="link" tabindex="0" onclick="openAppLoanFilter('overdue')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openAppLoanFilter('overdue')}">
           <div class="dashboard-stat-icon overdue"><i class="fa-solid fa-triangle-exclamation"></i></div>
-          <div class="dashboard-stat-info">
-            <strong id="dashOverdueCount">0</strong>
-            <span>Khoản mượn quá hạn</span>
-          </div>
+          <div class="dashboard-stat-info"><strong id="dashOverdueCount">0</strong><span>Khoản mượn quá hạn</span></div>
         </article>
       </div>
 
@@ -162,6 +128,20 @@
             <button type="button" class="clear-btn" onclick="switchAppTab('transactions')" style="font-size:11px;">Xem tất cả <i class="fa-solid fa-arrow-right"></i></button>
           </div>
           <div id="dashRecentLoansWrap" class="admin-table-wrap"></div>
+        </div>
+        <div class="dashboard-panel">
+          <div class="dashboard-panel-header">
+            <h3><i class="fa-solid fa-triangle-exclamation" style="color:#a45448;margin-right:8px;"></i> Phiếu quá hạn</h3>
+            <button type="button" class="clear-btn" onclick="openAppLoanFilter('overdue')" style="font-size:11px;">Xem phiếu quá hạn <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+          <div id="dashOverdueLoansWrap" class="admin-table-wrap"></div>
+        </div>
+        <div class="dashboard-panel">
+          <div class="dashboard-panel-header">
+            <h3><i class="fa-solid fa-clock-rotate-left" style="color:#238b65;margin-right:8px;"></i> Giao dịch gần đây</h3>
+            <button type="button" class="clear-btn" onclick="switchAppTab('history')" style="font-size:11px;">Mở lịch sử <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+          <div id="dashRecentActivityWrap" class="admin-table-wrap"></div>
         </div>
       </div>
       <div class="dashboard-panel dashboard-panel--wide">

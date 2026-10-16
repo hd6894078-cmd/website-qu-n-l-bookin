@@ -393,6 +393,10 @@ header:after{content:'';position:absolute;left:7%;right:7%;bottom:0;height:1px;b
 .dashboard-panel-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f0ede7}
 .dashboard-panel-header h3{font-family:'Playfair Display',serif;font-size:17px;color:var(--ink)}
 .dashboard-panel .admin-table-wrap{min-height:150px}
+.dashboard-panel--wide{margin-bottom:24px}
+.dashboard-panel--wide .admin-table-wrap{min-height:0}
+.dashboard-panel-note{margin:-5px 0 12px;color:var(--muted);font-size:11px}
+.admin-form-message.is-warning{padding:8px 10px;border-radius:7px;background:#fff6e8;color:#9b651f}
 
 .badge-overdue{background:#fde8e5;color:#a45448;border-radius:999px;padding:4px 10px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
 .badge-active{background:#eaf3eb;color:#238b65;border-radius:999px;padding:4px 10px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px}

@@ -102,13 +102,19 @@
   </div>
 </article>
 
-        <article class="dashboard-stat-card">
-          <div class="dashboard-stat-icon books"><i class="fa-solid fa-boxes-stacked"></i></div>
-          <div class="dashboard-stat-info">
-            <strong id="dashTotalCopies">0</strong>
-            <span>Tổng số bản sách</span>
-          </div>
-        </article>
+        
+<article class="dashboard-stat-card"
+         onclick="switchAppTab('books')"
+         style="cursor: pointer;">
+  <div class="dashboard-stat-icon books">
+    <i class="fa-solid fa-boxes-stacked"></i>
+  </div>
+  <div class="dashboard-stat-info">
+    <strong id="dashTotalCopies">0</strong>
+    <span>Tổng số bản sách</span>
+  </div>
+</article>
+
         <article class="dashboard-stat-card">
           <div class="dashboard-stat-icon available"><i class="fa-solid fa-book"></i></div>
           <div class="dashboard-stat-info">

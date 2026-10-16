@@ -89,13 +89,19 @@
     <!-- SECTION 1: TỔNG QUAN (DASHBOARD) -->
     <section id="section-overview" class="app-section is-active">
       <div class="dashboard-stat-grid">
-        <article class="dashboard-stat-card">
-          <div class="dashboard-stat-icon titles"><i class="fa-solid fa-book-open"></i></div>
-          <div class="dashboard-stat-info">
-            <strong id="dashTitleCount">0</strong>
-            <span>Đầu sách</span>
-          </div>
-        </article>
+       
+<article class="dashboard-stat-card"
+         onclick="switchAppTab('books')"
+         style="cursor: pointer;">
+  <div class="dashboard-stat-icon titles">
+    <i class="fa-solid fa-book-open"></i>
+  </div>
+  <div class="dashboard-stat-info">
+    <strong id="dashTitleCount">0</strong>
+    <span>Đầu sách</span>
+  </div>
+</article>
+
         <article class="dashboard-stat-card">
           <div class="dashboard-stat-icon books"><i class="fa-solid fa-boxes-stacked"></i></div>
           <div class="dashboard-stat-info">

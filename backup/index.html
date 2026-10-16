@@ -160,7 +160,7 @@
         <div class="admin-toolbar">
           <button id="appAddBookBtn" class="admin-add-book" type="button"><i class="fa-solid fa-plus"></i> Nhập sách mới</button>
           <div class="admin-filters" style="width:100%;">
-            <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBookSearch" type="search" placeholder="Tìm theo mã hoặc tên sách..."></label>
+            <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBookSearch" type="search" placeholder="Tìm theo mã, tên sách hoặc tác giả..."></label>
             <select id="appBookCategoryFilter"><option value="all">Tất cả thể loại</option></select>
             <select id="appBookStatusFilter" aria-label="Lọc theo trạng thái tồn kho"><option value="all">Tất cả trạng thái</option><option value="empty">Hết sách</option><option value="low">Sắp hết</option><option value="available">Còn sách</option></select>
           </div>
@@ -192,7 +192,7 @@
       <div class="admin-workspace">
         <div class="admin-toolbar">
           <button id="appNewLoanBtn" class="admin-add-book" type="button" style="background:#238b65;border-color:#238b65;"><i class="fa-solid fa-file-circle-plus"></i> Tạo phiếu mượn tại quầy</button>
-          <div class="admin-filters">
+          <div class="admin-filters loan-filters">
             <label class="admin-search"><i class="fa-solid fa-magnifying-glass"></i><input id="appLoanSearch" type="search" placeholder="Tìm phiếu, người mượn, sách..."></label>
             <select id="appLoanStatusFilter">
               <option value="all">Tất cả trạng thái</option>
@@ -200,6 +200,14 @@
               <option value="overdue">Quá hạn</option>
               <option value="returned">Đã trả</option>
             </select>
+            <select id="appLoanDateField" aria-label="Chọn loại ngày lọc">
+              <option value="borrowDate">Ngày mượn</option>
+              <option value="dueDate">Hạn trả</option>
+              <option value="returnDate">Ngày trả</option>
+            </select>
+            <label class="loan-date-label">Từ ngày<input id="appLoanDateFrom" class="loan-date-filter" type="date" aria-label="Từ ngày"></label>
+            <label class="loan-date-label">Đến ngày<input id="appLoanDateTo" class="loan-date-filter" type="date" aria-label="Đến ngày"></label>
+            <button id="appLoanClearFilters" class="admin-action" type="button">Xóa lọc</button>
           </div>
         </div>
         <div id="appLoanTableWrap" class="admin-table-wrap"></div>

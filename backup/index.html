@@ -176,6 +176,11 @@
           <button id="appAddBorrowerBtn" class="admin-add-book" type="button" style="background:#4b78c2;border-color:#4b78c2;"><i class="fa-solid fa-user-plus"></i> Thêm người mượn</button>
           <div class="admin-filters" style="width:100%;">
             <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBorrowerSearch" type="search" placeholder="Tìm tên, mã, số điện thoại hoặc email..."></label>
+            <select id="appBorrowerStatusFilter" aria-label="Lọc người mượn theo trạng thái">
+              <option value="all">Tất cả trạng thái</option>
+              <option value="active">Đang hoạt động</option>
+              <option value="inactive">Ngừng hoạt động</option>
+            </select>
           </div>
         </div>
         <div id="appBorrowerTableWrap" class="admin-table-wrap"></div>
@@ -217,13 +222,28 @@
 
     <!-- SECTION 6: THỐNG KÊ -->
     <section id="section-statistics" class="app-section">
+      <div class="statistics-toolbar dashboard-panel">
+        <div><strong>Báo cáo hoạt động thư viện</strong><p>Thống kê được tính từ phiếu mượn trong JSON Server.</p></div>
+        <div class="statistics-toolbar-actions">
+          <label for="appStatYearFilter">Năm báo cáo</label>
+          <select id="appStatYearFilter" aria-label="Chọn năm báo cáo"></select>
+          <button id="appStatExportCsv" class="primary-btn" type="button"><i class="fa-solid fa-file-csv"></i> Xuất CSV</button>
+        </div>
+      </div>
       <div id="appStatSummaryWrap" class="dashboard-stat-grid"></div>
+      <div class="dashboard-panel dashboard-panel--wide statistics-monthly-panel">
+        <div class="dashboard-panel-header">
+          <h3><i class="fa-solid fa-chart-column" style="color:var(--orange);margin-right:8px;"></i> Lượt mượn theo tháng</h3>
+          <span class="statistics-hint">Số phiếu và tổng số bản được mượn</span>
+        </div>
+        <div id="appStatMonthlyWrap" class="admin-table-wrap"></div>
+      </div>
       <div class="dashboard-two-col">
         <div class="dashboard-panel">
           <div class="dashboard-panel-header">
-            <h3><i class="fa-solid fa-chart-pie" style="color:var(--orange);margin-right:8px;"></i> Tỷ lệ phân bố thể loại sách</h3>
+            <h3><i class="fa-solid fa-chart-pie" style="color:var(--orange);margin-right:8px;"></i> Lượt mượn theo thể loại</h3>
           </div>
-          <div id="appStatCategoryWrap"></div>
+          <div id="appStatCategoryWrap" class="admin-table-wrap statistics-category-wrap"></div>
         </div>
         <div class="dashboard-panel">
           <div class="dashboard-panel-header">
@@ -250,7 +270,7 @@
       <div><span>CHI TIẾT KHO SÁCH</span><h2 id="appBookDetailTitle">Thông tin đầu sách</h2></div>
       <button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <div id="appBookDetailContent" class="admin-form-grid"></div>
+    <div id="appBookDetailContent" class="book-detail-grid"></div>
     <div class="admin-book-dialog-actions"><button class="admin-dialog-cancel" type="button">Đóng</button></div>
   </div>
 </dialog>
@@ -341,7 +361,7 @@
       <div><span>HỒ SƠ NGƯỜI MƯỢN</span><h2 id="appBorrowerDetailTitle">Thông tin người mượn</h2></div>
       <button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <div id="appBorrowerDetailContent" class="admin-form-grid"></div>
+    <div id="appBorrowerDetailContent" class="book-detail-grid borrower-detail-grid"></div>
     <div class="admin-book-dialog-actions"><button class="admin-dialog-cancel" type="button">Đóng</button></div>
   </div>
 </dialog>

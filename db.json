@@ -8,7 +8,7 @@
       "rating": 4.8,
       "status": "available",
       "totalQuantity": 10,
-      "availableQuantity": 10,
+      "availableQuantity": 9,
       "year": 1936,
       "publisher": "NXB Trẻ",
       "pages": 320,
@@ -40,7 +40,7 @@
       "rating": 4.7,
       "status": "available",
       "totalQuantity": 6,
-      "availableQuantity": 5,
+      "availableQuantity": 3,
       "year": 2016,
       "publisher": "NXB Hội Nhà Văn",
       "pages": 285,
@@ -531,6 +531,16 @@
       "status": "inactive",
       "membership": "Thành viên",
       "joinedAt": "2025-04-27"
+    },
+    {
+      "name": "Nguyễn Khánh Linh",
+      "email": "nguyenkhanhlinh011107@gmail.com",
+      "phone": "0375624932",
+      "status": "active",
+      "membership": "Thành viên",
+      "joinedAt": "2026-10-17",
+      "role": "reader",
+      "id": "Gea7AmwP4Tw"
     }
   ],
   "borrowings": [
@@ -593,6 +603,32 @@
       "dueDate": "2026-10-24",
       "returnDate": null,
       "status": "active"
+    },
+    {
+      "ticketId": "BR-006",
+      "borrowerId": "Gea7AmwP4Tw",
+      "bookId": "1",
+      "borrowerName": "Nguyễn Khánh Linh",
+      "bookTitle": "Đắc Nhân Tâm",
+      "quantity": 1,
+      "borrowDate": "2026-10-17",
+      "dueDate": "2026-10-24",
+      "returnDate": null,
+      "status": "active",
+      "id": "YI2PWgb_QEw"
+    },
+    {
+      "ticketId": "BR-006",
+      "borrowerId": "Gea7AmwP4Tw",
+      "bookId": "3",
+      "borrowerName": "Nguyễn Khánh Linh",
+      "bookTitle": "Tuổi Trẻ Đáng Giá Bao Nhiêu",
+      "quantity": 2,
+      "borrowDate": "2026-10-17",
+      "dueDate": "2026-10-24",
+      "returnDate": null,
+      "status": "active",
+      "id": "qnqp6VNINQw"
     }
   ],
   "admin": [
@@ -638,6 +674,17 @@
       "userId": "Quản trị viên",
       "bookId": 2,
       "details": "Phạm Gia Huy mượn cuốn Nhà Giả Kim (4 cuốn)"
+    },
+    {
+      "action": "Tạo phiếu mượn",
+      "ticketId": "BR-006",
+      "borrowerId": "Gea7AmwP4Tw",
+      "borrowerName": "Nguyễn Khánh Linh",
+      "bookTitle": "Đắc Nhân Tâm, Tuổi Trẻ Đáng Giá Bao Nhiêu",
+      "details": "Phiếu BR-006: Nguyễn Khánh Linh mượn 1 bản “Đắc Nhân Tâm”, 2 bản “Tuổi Trẻ Đáng Giá Bao Nhiêu”; hạn trả 2026-10-24.",
+      "userId": "Quản trị viên",
+      "date": "2026-10-17T09:02:29.664Z",
+      "id": "fKLmO5w5dWo"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

@@ -322,13 +322,15 @@
         </select>
       </label>
       <label class="admin-form-wide">Sách
-        <select id="appLoanBookSelect" name="bookId" required>
+        <select id="appLoanBookSelect" name="bookId">
           <option value="">-- Chọn sách --</option>
         </select>
       </label>
-      <label class="admin-form-wide">Số lượng
-        <input type="number" id="appLoanQuantity" name="quantity" value="1" min="1" step="1" required>
+      <label>Số lượng
+        <input type="number" id="appLoanQuantity" name="quantity" value="1" min="1" step="1">
       </label>
+      <div class="admin-loan-add-row"><button id="appLoanAddBook" class="admin-action" type="button"><i class="fa-solid fa-plus"></i> Thêm sách vào phiếu</button></div>
+      <div class="admin-form-wide admin-loan-cart-section"><strong>Sách trong phiếu</strong><div id="appLoanCart" class="admin-loan-cart"><p class="admin-empty">Chưa thêm sách vào phiếu.</p></div></div>
       <label>Ngày mượn
         <input type="date" id="appLoanBorrowDate" name="borrowDate" required>
       </label>

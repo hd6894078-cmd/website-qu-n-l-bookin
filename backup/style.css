@@ -425,6 +425,14 @@ header:after{content:'';position:absolute;left:7%;right:7%;bottom:0;height:1px;b
 .loan-filters{flex-wrap:wrap}
 .loan-date-label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:10px;white-space:nowrap}
 .loan-date-filter{height:36px;min-width:132px;padding:0 8px;border:1px solid #e8e3da;border-radius:8px;background:#fff;color:#65645d;font-size:10px}
+.admin-loan-add-row{display:flex;align-items:end;padding-bottom:1px}
+.admin-loan-cart-section{display:grid;gap:8px;padding:12px;border:1px solid #ece8df;border-radius:10px;background:#fcfbf8}
+.admin-loan-cart-section>strong{font-size:11px;color:var(--ink)}
+.admin-loan-cart{display:grid;gap:7px}
+.admin-loan-cart-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:9px 10px;border:1px solid #eee9e0;border-radius:8px;background:#fff;font-size:11px}
+.admin-loan-cart-row small{color:var(--muted)}
+.admin-loan-cart-row button{padding:5px 8px;border:1px solid #f0d4cf;border-radius:7px;background:#fff7f5;color:#a45448;cursor:pointer}
+.admin-loan-cart .admin-empty{margin:0;padding:6px;text-align:left}
 
 .badge-overdue{background:#fde8e5;color:#a45448;border-radius:999px;padding:4px 10px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px}
 .badge-active{background:#eaf3eb;color:#238b65;border-radius:999px;padding:4px 10px;font-size:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px}

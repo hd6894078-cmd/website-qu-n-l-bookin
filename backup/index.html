@@ -162,10 +162,31 @@
           <div class="admin-filters" style="width:100%;">
             <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBookSearch" type="search" placeholder="Tìm theo mã, tên sách hoặc tác giả..."></label>
             <select id="appBookCategoryFilter"><option value="all">Tất cả thể loại</option></select>
-            <select id="appBookStatusFilter" aria-label="Lọc theo trạng thái tồn kho"><option value="all">Tất cả trạng thái</option><option value="empty">Hết sách</option><option value="low">Sắp hết</option><option value="available">Còn sách</option></select>
+            <select id="appBookStatusFilter" aria-label="Lọc theo trạng thái tồn kho">
+  <option value="all">Tất cả trạng thái</option>
+  <option value="empty">Hết sách</option>
+  <option value="low">Sắp hết</option>
+  <option value="available">Còn sách</option>
+</select>
+
+<select id="appBookSort" aria-label="Sắp xếp sách">
+    <option value="default">Mặc định</option>
+    <option value="title-asc">Tên sách</option>
+    <option value="author-asc">Tác giả</option>
+    <option value="year-desc">Năm xuất bản</option>
+    <option value="stock-asc">Số lượng còn lại</option>
+</select>
+
+<button id="appBookRefreshBtn" class="admin-action" type="button">
+  <i class="fa-solid fa-rotate"></i> Làm mới
+</button>
           </div>
         </div>
         <div id="appBookTableWrap" class="admin-table-wrap"></div>
+        <div id="appBookPagination"
+     aria-label="Phân trang danh sách sách"
+     style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid #eeeae3;">
+</div>
       </div>
     </section>
 
@@ -322,15 +343,13 @@
         </select>
       </label>
       <label class="admin-form-wide">Sách
-        <select id="appLoanBookSelect" name="bookId">
+        <select id="appLoanBookSelect" name="bookId" required>
           <option value="">-- Chọn sách --</option>
         </select>
       </label>
-      <label>Số lượng
-        <input type="number" id="appLoanQuantity" name="quantity" value="1" min="1" step="1">
+      <label class="admin-form-wide">Số lượng
+        <input type="number" id="appLoanQuantity" name="quantity" value="1" min="1" step="1" required>
       </label>
-      <div class="admin-loan-add-row"><button id="appLoanAddBook" class="admin-action" type="button"><i class="fa-solid fa-plus"></i> Thêm sách vào phiếu</button></div>
-      <div class="admin-form-wide admin-loan-cart-section"><strong>Sách trong phiếu</strong><div id="appLoanCart" class="admin-loan-cart"><p class="admin-empty">Chưa thêm sách vào phiếu.</p></div></div>
       <label>Ngày mượn
         <input type="date" id="appLoanBorrowDate" name="borrowDate" required>
       </label>

@@ -1564,8 +1564,15 @@ async function deleteAppBook(bookId){
 }
 function openAppBookDialogForEdit(bookId){
   const book=bookId==null?null:appBookById(bookId),dialog=document.getElementById("appBookDialog"),form=document.getElementById("appBookForm"),category=document.getElementById("appBookCategory");if(!dialog||!form)return;
-  const categories=[...new Set(books.map(item=>item.category).filter(Boolean))];if(!categories.length)categories.push("Văn học","Kỹ năng sống","Công nghệ","Khoa học","Lịch sử");if(book?.category&&!categories.includes(book.category))categories.push(book.category);
-  category.innerHTML=categories.map(name=>`<option value="${apiEscapeHTML(name)}">${apiEscapeHTML(name)}</option>`).join("");form.reset();form.elements.id.value=book?.id||"";form.elements.title.value=book?.title||"";form.elements.author.value=book?.author||"";form.elements.category.value=book?.category||categories[0]||"";form.elements.totalQuantity.value=book?.totalQuantity??5;form.elements.availableQuantity.value=book?.availableQuantity??5;form.elements.year.value=book?.year||new Date().getFullYear();form.elements.pages.value=book?.pages||300;form.elements.image.value=book?.image||"";setAdminFormFeedback("appBookMessage","");document.getElementById("appBookDialogTitle").textContent=book?"Cập nhật thông tin kho sách":"Nhập đầu sách mới";dialog.showModal();
+  const categories=[...new Set(books.map(item=>item.category).filter(Boolean))],options=document.getElementById("appBookCategoryOptions");if(!categories.length)categories.push("Văn học","Kỹ năng sống","Công nghệ","Khoa học","Lịch sử");if(book?.category&&!categories.includes(book.category))categories.push(book.category);
+  if(options)options.innerHTML=categories.map(name=>`<option value="${apiEscapeHTML(name)}"></option>`).join("");form.reset();form.elements.id.value=book?.id||"";form.elements.title.value=book?.title||"";form.elements.author.value=book?.author||"";form.elements.category.value=book?.category||"";form.elements.totalQuantity.value=book?.totalQuantity??5;form.elements.availableQuantity.value=book?.availableQuantity??5;form.elements.year.value=book?.year||new Date().getFullYear();form.elements.pages.value=book?.pages||300;form.elements.image.value=book?.image||"";setAdminFormFeedback("appBookMessage","");document.getElementById("appBookDialogTitle").textContent=book?"Cập nhật thông tin kho sách":"Nhập đầu sách mới";dialog.showModal();
+}
+function addAppBookCategory(){
+  const input=document.getElementById("appBookCategory"),options=document.getElementById("appBookCategoryOptions"),raw=window.prompt("Nhập tên thể loại mới:");if(raw===null)return;
+  const name=raw.trim();if(!name){setAdminFormFeedback("appBookMessage","Tên thể loại không được để trống.","error");return;}
+  const existing=[...(options?.options||[])].find(option=>option.value.trim().toLocaleLowerCase("vi-VN")===name.toLocaleLowerCase("vi-VN"));
+  if(existing){input.value=existing.value;setAdminFormFeedback("appBookMessage",`Thể loại “${existing.value}” đã có trong danh sách.`,"success");return;}
+  if(options)options.append(new Option(name,name));input.value=name;setAdminFormFeedback("appBookMessage",`Đã thêm “${name}” vào gợi ý. Lưu sách để thể loại xuất hiện trong bộ lọc.`,"success");
 }
 async function initApiAdminApp(){
   let adminSession;
@@ -1585,6 +1592,7 @@ async function initApiAdminApp(){
   document.getElementById("mobileSidebarToggle")?.addEventListener("click",()=>document.getElementById("appSidebar")?.classList.toggle("is-open"));
   document.getElementById("appQuickLoanBtn")?.addEventListener("click",()=>document.getElementById("appNewLoanBtn")?.click());
   document.getElementById("appAddBookBtn")?.addEventListener("click",()=>openAppBookDialogForEdit(null));
+  document.getElementById("appAddCategoryBtn")?.addEventListener("click",addAppBookCategory);
   document.getElementById("appBookSearch")?.addEventListener("input",renderApiBooks);
   document.getElementById("appBookCategoryFilter")?.addEventListener("change",renderApiBooks);
   document.getElementById("appBookStatusFilter")?.addEventListener("change",renderApiBooks);

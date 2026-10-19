@@ -314,7 +314,7 @@
     <div class="admin-form-grid">
       <label class="admin-form-wide">Tên sách<input id="appBookTitle" name="title" type="text" required></label>
       <label>Tác giả<input id="appBookAuthor" name="author" type="text" required></label>
-      <label>Thể loại<select id="appBookCategory" name="category" required></select></label>
+      <div class="admin-form-category-field"><label for="appBookCategory">Thể loại</label><div class="admin-form-category-control"><input id="appBookCategory" name="category" type="text" list="appBookCategoryOptions" placeholder="Nhập hoặc chọn thể loại" required><datalist id="appBookCategoryOptions"></datalist><button id="appAddCategoryBtn" class="admin-action" type="button"><i class="fa-solid fa-plus"></i> Thêm</button></div><small>Bạn có thể nhập thể loại mới; thể loại sẽ xuất hiện trong bộ lọc sau khi lưu sách.</small></div>
       <label>Tổng số bản trong kho<input id="appBookTotalQuantity" name="totalQuantity" type="number" min="0" step="1" value="5" required></label>
       <label>Số bản có sẵn trên kệ<input id="appBookAvailableQuantity" name="availableQuantity" type="number" min="0" step="1" value="4" required></label>
       <label>Năm xuất bản<input id="appBookYear" name="year" type="number" value="2024" required></label>

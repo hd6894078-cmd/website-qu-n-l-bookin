@@ -462,3 +462,63 @@ header:after{content:'';position:absolute;left:7%;right:7%;bottom:0;height:1px;b
   .app-api-status{max-width:100%;white-space:normal}
 }
 
+
+/* ===== THONG KE NGUOI MUON ===== */
+
+#section-borrowers .borrower-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+#section-borrowers .borrower-stat {
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    transition: transform .2s, box-shadow .2s;
+}
+
+#section-borrowers .borrower-stat:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
+}
+
+#section-borrowers .borrower-stat i {
+    font-size: 20px;
+}
+
+#section-borrowers .borrower-stat p {
+    margin: 10px 0 6px;
+    font-size: 13px;
+    color: #647168;
+}
+
+#section-borrowers .borrower-stat strong {
+    font-size: 26px;
+}
+
+#section-borrowers .borrower-stat.green {
+    background: #e8f5ed;
+    color: #168452;
+    border-color: #d6ebde;
+}
+
+#section-borrowers .borrower-stat.blue {
+    background: #e9f1ff;
+    color: #2875d2;
+    border-color: #d8e6fb;
+}
+
+#section-borrowers .borrower-stat.red {
+    background: #fff0ed;
+    color: #d84c42;
+    border-color: #f7dcd6;
+}
+
+@media (max-width: 600px) {
+    #section-borrowers .borrower-stats {
+        grid-template-columns: 1fr;
+    }
+}
+

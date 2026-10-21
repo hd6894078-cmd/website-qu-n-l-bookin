@@ -8,7 +8,7 @@
       "rating": 4.8,
       "status": "available",
       "totalQuantity": 10,
-      "availableQuantity": 10,
+      "availableQuantity": 9,
       "year": 1936,
       "publisher": "NXB Trẻ",
       "pages": 320,
@@ -40,7 +40,7 @@
       "rating": 4.7,
       "status": "available",
       "totalQuantity": 6,
-      "availableQuantity": 5,
+      "availableQuantity": 4,
       "year": 2016,
       "publisher": "NXB Hội Nhà Văn",
       "pages": 285,
@@ -136,7 +136,7 @@
       "rating": 4.8,
       "status": "available",
       "totalQuantity": 6,
-      "availableQuantity": 6,
+      "availableQuantity": 5,
       "year": 2020,
       "publisher": "First News",
       "pages": 416,
@@ -531,6 +531,26 @@
       "status": "inactive",
       "membership": "Thành viên",
       "joinedAt": "2025-04-27"
+    },
+    {
+      "name": "Nguyễn Khánh Linh",
+      "email": "khanhlinh@gmail.com",
+      "phone": "0458986866",
+      "status": "active",
+      "membership": "Thành viên",
+      "joinedAt": "2026-10-17",
+      "role": "reader",
+      "id": "6Ci7XuDU_ok"
+    },
+    {
+      "name": "Kim Ngân",
+      "email": "kimngan@gmail.ocm",
+      "phone": "03287527",
+      "status": "active",
+      "membership": "Thành viên",
+      "joinedAt": "2026-10-21",
+      "role": "reader",
+      "id": "rymZqjOh9QQ"
     }
   ],
   "borrowings": [
@@ -593,6 +613,42 @@
       "dueDate": "2026-10-24",
       "returnDate": null,
       "status": "active"
+    },
+    {
+      "borrowerId": "6Ci7XuDU_ok",
+      "bookId": "1",
+      "borrowerName": "Nguyễn Khánh Linh",
+      "bookTitle": "Đắc Nhân Tâm",
+      "quantity": 1,
+      "borrowDate": "2026-10-17",
+      "dueDate": "2026-10-24",
+      "returnDate": null,
+      "status": "active",
+      "id": "A37gdKN_i30"
+    },
+    {
+      "borrowerId": "6Ci7XuDU_ok",
+      "bookId": "9",
+      "borrowerName": "Nguyễn Khánh Linh",
+      "bookTitle": "Muôn Kiếp Nhân Sinh",
+      "quantity": 1,
+      "borrowDate": "2026-10-17",
+      "dueDate": "2026-10-24",
+      "returnDate": null,
+      "status": "active",
+      "id": "6QaHltsQYtE"
+    },
+    {
+      "borrowerId": "rymZqjOh9QQ",
+      "bookId": "3",
+      "borrowerName": "Kim Ngân",
+      "bookTitle": "Tuổi Trẻ Đáng Giá Bao Nhiêu",
+      "quantity": 1,
+      "borrowDate": "2026-10-21",
+      "dueDate": "2026-10-28",
+      "returnDate": null,
+      "status": "active",
+      "id": "PkR3HC6jiWY"
     }
   ],
   "admin": [
@@ -638,6 +694,42 @@
       "userId": "Quản trị viên",
       "bookId": 2,
       "details": "Phạm Gia Huy mượn cuốn Nhà Giả Kim (4 cuốn)"
+    },
+    {
+      "action": "Tạo phiếu mượn",
+      "bookId": "1",
+      "bookTitle": "Đắc Nhân Tâm",
+      "borrowerId": "6Ci7XuDU_ok",
+      "borrowerName": "Nguyễn Khánh Linh",
+      "loanId": "A37gdKN_i30",
+      "details": "Phiếu A37gdKN_i30: Nguyễn Khánh Linh mượn 1 bản “Đắc Nhân Tâm”, hạn trả 2026-10-24.",
+      "userId": "Quản trị viên",
+      "date": "2026-10-17T06:33:03.037Z",
+      "id": "qICq8wKmcKg"
+    },
+    {
+      "action": "Tạo phiếu mượn",
+      "bookId": "9",
+      "bookTitle": "Muôn Kiếp Nhân Sinh",
+      "borrowerId": "6Ci7XuDU_ok",
+      "borrowerName": "Nguyễn Khánh Linh",
+      "loanId": "6QaHltsQYtE",
+      "details": "Phiếu 6QaHltsQYtE: Nguyễn Khánh Linh mượn 1 bản “Muôn Kiếp Nhân Sinh”, hạn trả 2026-10-24.",
+      "userId": "Quản trị viên",
+      "date": "2026-10-17T06:33:17.922Z",
+      "id": "BQv6KU81tXo"
+    },
+    {
+      "action": "Tạo phiếu mượn",
+      "bookId": "3",
+      "bookTitle": "Tuổi Trẻ Đáng Giá Bao Nhiêu",
+      "borrowerId": "rymZqjOh9QQ",
+      "borrowerName": "Kim Ngân",
+      "loanId": "PkR3HC6jiWY",
+      "details": "Phiếu PkR3HC6jiWY: Kim Ngân mượn 1 bản “Tuổi Trẻ Đáng Giá Bao Nhiêu”, hạn trả 2026-10-28.",
+      "userId": "Quản trị viên",
+      "date": "2026-10-21T10:43:21.785Z",
+      "id": "28XKlkYe4kw"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

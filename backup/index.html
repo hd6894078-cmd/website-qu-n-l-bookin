@@ -333,9 +333,10 @@
 <dialog id="appLoanDialog" class="admin-book-dialog">
   <form id="appLoanForm" class="admin-book-form">
     <div class="admin-book-dialog-heading">
-      <div><span>NGHIỆP VỤ TẠI QUẦY</span><h2>TẠO PHIẾU MƯỢN</h2></div>
+      <div><span>NGHIỆP VỤ TẠI QUẦY</span><h2 id="appLoanDialogTitle">TẠO PHIẾU MƯỢN</h2></div>
       <button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
     </div>
+    <input type="hidden" name="ticketId" value="">
     <div class="admin-form-grid">
       <label class="admin-form-wide">Người mượn
         <select id="appLoanReaderSelect" name="readerId" required>
@@ -362,7 +363,7 @@
     <p id="appLoanMessage" class="admin-form-message"></p>
     <div class="admin-book-dialog-actions" style="margin-top:20px;justify-content:center;">
       <button class="admin-dialog-cancel" type="button">Hủy</button>
-      <button class="admin-dialog-save" type="submit" style="background:#238b65;border-color:#238b65;padding:12px 28px;font-size:13px;">XÁC NHẬN MƯỢN</button>
+      <button id="appLoanSaveBtn" class="admin-dialog-save" type="submit" style="background:#238b65;border-color:#238b65;padding:12px 28px;font-size:13px;">XÁC NHẬN MƯỢN</button>
     </div>
   </form>
 </dialog>

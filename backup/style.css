@@ -239,6 +239,7 @@ header:after{content:'';position:absolute;left:7%;right:7%;bottom:0;height:1px;b
 .book-detail-item{min-width:0;display:flex;flex-direction:column;gap:4px;padding:13px 15px;border:1px solid #eee9e1;border-radius:10px;background:#fcfbf8}
 .book-detail-item small{color:#89847a;font-size:10px;font-weight:700;letter-spacing:.35px}
 .book-detail-item strong{color:var(--ink);font-size:13px;line-height:1.55;overflow-wrap:anywhere}
+.borrower-ticket-list{display:grid;gap:10px;margin-top:8px}.borrower-ticket-list .book-detail-item{background:#fff}.borrower-ticket-list .book-detail-item>div{font-size:11px;line-height:1.7;color:#615e57}.borrower-ticket-list .admin-action{align-self:flex-start;margin-top:6px}.app-ticket-detail-table{margin-top:18px;overflow:auto}.app-ticket-detail-table table{min-width:560px;width:100%}.app-ticket-detail-dialog .book-detail-grid{margin-top:0}
 .book-detail-item.is-wide{grid-column:1/-1}
 @media(max-width:520px){.book-detail-grid{grid-template-columns:1fr;gap:9px}.book-detail-item.is-wide{grid-column:auto}}
 .admin-unauthorized-card p{color:#6e6a61;font-size:13px;line-height:1.6;margin-bottom:20px}

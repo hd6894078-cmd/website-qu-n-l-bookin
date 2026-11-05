@@ -162,10 +162,31 @@
           <div class="admin-filters" style="width:100%;">
             <label class="admin-search" style="flex:1;"><i class="fa-solid fa-magnifying-glass"></i><input id="appBookSearch" type="search" placeholder="Tìm theo mã, tên sách hoặc tác giả..."></label>
             <select id="appBookCategoryFilter"><option value="all">Tất cả thể loại</option></select>
-            <select id="appBookStatusFilter" aria-label="Lọc theo trạng thái tồn kho"><option value="all">Tất cả trạng thái</option><option value="empty">Hết sách</option><option value="low">Sắp hết</option><option value="available">Còn sách</option></select>
+            <select id="appBookStatusFilter" aria-label="Lọc theo trạng thái tồn kho">
+  <option value="all">Tất cả trạng thái</option>
+  <option value="empty">Hết sách</option>
+  <option value="low">Sắp hết</option>
+  <option value="available">Còn sách</option>
+</select>
+
+<select id="appBookSort" aria-label="Sắp xếp sách">
+    <option value="default">Mặc định</option>
+    <option value="title-asc">Tên sách</option>
+    <option value="author-asc">Tác giả</option>
+    <option value="year-desc">Năm xuất bản</option>
+    <option value="stock-asc">Số lượng còn lại</option>
+</select>
+
+<button id="appBookRefreshBtn" class="admin-action" type="button">
+  <i class="fa-solid fa-rotate"></i> Làm mới
+</button>
           </div>
         </div>
         <div id="appBookTableWrap" class="admin-table-wrap"></div>
+        <div id="appBookPagination"
+     aria-label="Phân trang danh sách sách"
+     style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-top:1px solid #eeeae3;">
+</div>
       </div>
     </section>
 
@@ -315,7 +336,7 @@
     <div class="admin-form-grid">
       <label class="admin-form-wide">Tên sách<input id="appBookTitle" name="title" type="text" required></label>
       <label>Tác giả<input id="appBookAuthor" name="author" type="text" required></label>
-      <label>Thể loại<select id="appBookCategory" name="category" required></select></label>
+      <div class="admin-form-category-field"><label for="appBookCategory">Thể loại</label><div class="admin-form-category-control"><input id="appBookCategory" name="category" type="text" list="appBookCategoryOptions" placeholder="Nhập hoặc chọn thể loại" required><datalist id="appBookCategoryOptions"></datalist><button id="appAddCategoryBtn" class="admin-action" type="button"><i class="fa-solid fa-plus"></i> Thêm</button></div><small>Bạn có thể nhập thể loại mới; thể loại sẽ xuất hiện trong bộ lọc sau khi lưu sách.</small></div>
       <label>Tổng số bản trong kho<input id="appBookTotalQuantity" name="totalQuantity" type="number" min="0" step="1" value="5" required></label>
       <label>Số bản có sẵn trên kệ<input id="appBookAvailableQuantity" name="availableQuantity" type="number" min="0" step="1" value="4" required></label>
       <label>Năm xuất bản<input id="appBookYear" name="year" type="number" value="2024" required></label>
@@ -334,23 +355,29 @@
 <dialog id="appLoanDialog" class="admin-book-dialog">
   <form id="appLoanForm" class="admin-book-form">
     <div class="admin-book-dialog-heading">
-      <div><span>NGHIỆP VỤ TẠI QUẦY</span><h2>TẠO PHIẾU MƯỢN</h2></div>
+      <div><span>NGHIỆP VỤ TẠI QUẦY</span><h2 id="appLoanDialogTitle">TẠO PHIẾU MƯỢN</h2></div>
       <button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button>
     </div>
+    <input type="hidden" name="ticketId" value="">
     <div class="admin-form-grid">
       <label class="admin-form-wide">Người mượn
         <select id="appLoanReaderSelect" name="readerId" required>
           <option value="">-- Chọn người mượn --</option>
         </select>
       </label>
+      <label class="admin-form-wide">Nhân viên lập phiếu
+        <input id="appLoanCreatedByName" name="createdByName" type="text" maxlength="100" placeholder="Nhập tên nhân viên" required>
+      </label>
       <label class="admin-form-wide">Sách
-        <select id="appLoanBookSelect" name="bookId" required>
+        <select id="appLoanBookSelect" name="bookId">
           <option value="">-- Chọn sách --</option>
         </select>
       </label>
-      <label class="admin-form-wide">Số lượng
-        <input type="number" id="appLoanQuantity" name="quantity" value="1" min="1" step="1" required>
+      <label>Số lượng
+        <input type="number" id="appLoanQuantity" name="quantity" value="1" min="1" step="1">
       </label>
+      <div class="admin-loan-add-row"><button id="appLoanAddBook" class="admin-action" type="button"><i class="fa-solid fa-plus"></i> Thêm sách vào phiếu</button></div>
+      <div class="admin-form-wide admin-loan-cart-section"><strong>Sách trong phiếu</strong><div id="appLoanCart" class="admin-loan-cart"><p class="admin-empty">Chưa thêm sách vào phiếu.</p></div></div>
       <label>Ngày mượn
         <input type="date" id="appLoanBorrowDate" name="borrowDate" required>
       </label>
@@ -361,7 +388,7 @@
     <p id="appLoanMessage" class="admin-form-message"></p>
     <div class="admin-book-dialog-actions" style="margin-top:20px;justify-content:center;">
       <button class="admin-dialog-cancel" type="button">Hủy</button>
-      <button class="admin-dialog-save" type="submit" style="background:#238b65;border-color:#238b65;padding:12px 28px;font-size:13px;">XÁC NHẬN MƯỢN</button>
+      <button id="appLoanSaveBtn" class="admin-dialog-save" type="submit" style="background:#238b65;border-color:#238b65;padding:12px 28px;font-size:13px;">XÁC NHẬN MƯỢN</button>
     </div>
   </form>
 </dialog>

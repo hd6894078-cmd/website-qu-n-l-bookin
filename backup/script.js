@@ -1438,6 +1438,435 @@ function openAppBookDialogForEdit(bookId) {
   category.innerHTML = categories.map(name => `<option value="${apiEscapeHTML(name)}">${apiEscapeHTML(name)}</option>`).join(""); form.reset(); form.elements.id.value = book?.id || ""; form.elements.title.value = book?.title || ""; form.elements.author.value = book?.author || ""; form.elements.category.value = book?.category || categories[0] || ""; form.elements.totalQuantity.value = book?.totalQuantity ?? 5; form.elements.availableQuantity.value = book?.availableQuantity ?? 5; form.elements.year.value = book?.year || new Date().getFullYear(); form.elements.pages.value = book?.pages || 300; form.elements.image.value = book?.image || ""; setAdminFormFeedback("appBookMessage", ""); document.getElementById("appBookDialogTitle").textContent = book ? "Cập nhật thông tin kho sách" : "Nhập đầu sách mới"; dialog.showModal();
 }
 async function initApiAdminApp() {
+const apiEscapeHTML=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[char]));
+function appBookById(id){return books.find(book=>String(book.id)===String(id));}
+function appLoanById(id){return appBorrowings.find(loan=>String(loan.id)===String(id));}
+function appLoanRows(){
+  const today=appTodayISO();
+  return appBorrowings.map(loan=>({...loan,entryId:String(loan.id),ticketCode:String(loan.ticketId||loan.id),remainingQuantity:appLoanRemaining(loan),userId:loan.borrowerId,date:loan.borrowDate,isOverdue:isOpenBorrowing(loan)&&Boolean(loan.dueDate)&&loan.dueDate<today}));
+}
+function appLoanReturned(loan){const quantity=Number(loan?.quantity||1),recorded=Number(loan?.returnedQuantity);if(Number.isSafeInteger(recorded)&&recorded>0)return Math.min(recorded,quantity);return loan?.status==="returned"||loan?.returnDate?quantity:0;}
+function appLoanRemaining(loan){return Math.max(0,Number(loan?.quantity||1)-appLoanReturned(loan));}
+function isOpenBorrowing(loan){return Boolean(loan&&!loan.returnDate&&appLoanRemaining(loan)>0&&["active","overdue"].includes(loan.status));}
+function appTodayISO(){const now=new Date();return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;}
+function renderAppLoanCart(){
+  const wrap=document.getElementById("appLoanCart");if(!wrap)return;
+  wrap.innerHTML=appLoanCart.length?appLoanCart.map((item,index)=>`<div class="admin-loan-cart-row"><span><strong>${apiEscapeHTML(item.title)}</strong><small> ${apiEscapeHTML(item.author||"")}</small></span><span>${item.quantity} bản</span><button type="button" data-remove-loan-book="${index}" aria-label="Bỏ ${apiEscapeHTML(item.title)} khỏi phiếu">Bỏ</button></div>`).join(""):'<p class="admin-empty">Chưa thêm sách vào phiếu.</p>';
+}
+function addAppLoanCartItem(){
+  const bookSelect=document.getElementById("appLoanBookSelect"),quantityInput=document.getElementById("appLoanQuantity"),message=document.getElementById("appLoanMessage"),book=appBookById(bookSelect?.value),quantity=Number(quantityInput?.value);
+  if(!book){setAdminFormFeedback("appLoanMessage","Vui lòng chọn sách cần thêm.","error");return;}
+  if(!Number.isSafeInteger(quantity)||quantity<=0){setAdminFormFeedback("appLoanMessage","Số lượng phải là số nguyên dương.","error");return;}
+  const existing=appLoanCart.find(item=>String(item.bookId)===String(book.id)),combined=quantity+(existing?.quantity||0),available=Number(book.availableQuantity);
+  if(!Number.isSafeInteger(available)||combined>available){setAdminFormFeedback("appLoanMessage",`Sách “${book.title}” chỉ còn ${available} bản; tổng số lượng trong phiếu không được vượt tồn kho.`,"error");return;}
+  if(existing)existing.quantity=combined;else appLoanCart.push({bookId:book.id,title:book.title,author:book.author||"",quantity});
+  renderAppLoanCart();if(message){message.textContent=`Đã thêm “${book.title}” vào phiếu.`;message.classList.remove("is-error","is-loading");message.classList.add("is-success");}
+}
+function nextAppTicketId(loans=appBorrowings){
+  const highest=loans.reduce((max,loan)=>{const match=String(loan.ticketId||loan.id||"").match(/^BR-(\d+)$/i);return match?Math.max(max,Number(match[1])):max;},0);
+  return `BR-${String(highest+1).padStart(3,"0")}`;
+}
+let appLoanSubmitting=false;
+let appLoanCart=[];
+const appReturningLoans=new Set();
+const appDeletingRecords=new Set();
+let appBookSubmitting=false;
+let appBookPage=1;
+const appBookPageSize=10;
+let appBorrowerSubmitting=false;
+function setAdminFormFeedback(id,message,state=""){
+  const node=document.getElementById(id);if(!node)return;
+  node.textContent=message;node.classList.toggle("is-loading",state==="loading");node.classList.toggle("is-error",state==="error");node.classList.toggle("is-success",state==="success");
+}
+function setAdminBusyStatus(message=""){
+  const status=document.getElementById("appApiStatus");if(!status)return;
+  const hasApiError=Boolean(document.getElementById("appApiNotice")&&!document.getElementById("appApiNotice").hidden);
+  status.textContent=message||(hasApiError?"Chưa kết nối dữ liệu":"JSON Server đã sẵn sàng");status.classList.toggle("is-loading",Boolean(message));status.classList.toggle("is-error",!message&&hasApiError);
+}
+function appSetApiState(message,isError=false){
+  const status=document.getElementById("appApiStatus"),notice=document.getElementById("appApiNotice");
+  if(status){status.textContent=isError?"Chưa kết nối dữ liệu":message;status.classList.toggle("is-error",isError);status.classList.toggle("is-loading",!isError&&message.includes("tải"));}
+  if(notice)notice.hidden=!isError;
+  const unavailable=isError||message.includes("tải");["appQuickLoanBtn","appAddBookBtn","appAddBorrowerBtn","appNewLoanBtn"].forEach(id=>{const button=document.getElementById(id);if(button)button.disabled=unavailable;});
+  if(isError)["dashTitleCount","dashTotalCopies","dashAvailableCopies","dashBorrowedCount","dashOverdueCount"].forEach(id=>{const node=document.getElementById(id);if(node)node.textContent="—";});
+  const ids=["appBookTableWrap","appBorrowerTableWrap","appLoanTableWrap","appHistoryWrap","dashLowStockTableWrap","dashRecentLoansWrap","dashDueSoonTableWrap","dashOverdueLoansWrap","dashRecentActivityWrap","appStatSummaryWrap","appStatMonthlyWrap","appStatCategoryWrap","appStatOverdueWrap","appStatPopularWrap"];
+  ids.forEach(id=>{const node=document.getElementById(id);if(node)node.innerHTML=`<p class="admin-empty" ${isError?'role="alert"':''}>${isError?"Dữ liệu sẽ xuất hiện sau khi kết nối JSON Server.":apiEscapeHTML(message)}</p>`;});
+}
+async function reloadAdminApiData(){
+  const status=document.getElementById("appApiStatus");if(status){status.textContent="Đang tải dữ liệu…";status.classList.remove("is-error");status.classList.add("is-loading");}
+  ["appQuickLoanBtn","appAddBookBtn","appAddBorrowerBtn","appNewLoanBtn"].forEach(id=>{const button=document.getElementById(id);if(button)button.disabled=true;});
+  try{await refreshAdminApiData();if(status){status.textContent="JSON Server đã sẵn sàng";status.classList.remove("is-error","is-loading");}const notice=document.getElementById("appApiNotice");if(notice)notice.hidden=true;["appQuickLoanBtn","appAddBookBtn","appAddBorrowerBtn","appNewLoanBtn"].forEach(id=>{const button=document.getElementById(id);if(button)button.disabled=false;});}
+  catch(error){appSetApiState(error.message,true);}
+}
+async function refreshAdminApiData(render=true){
+  const api=window.bookinApi;if(!api)throw new Error("Không tìm thấy module API Bookin.");
+  const [bookRows,borrowerRows,loanRows,historyRows]=await Promise.all([api.getBooks(),api.getBorrowers(),api.getBorrowings(),api.getHistory()]);
+  books=bookRows;users=borrowerRows;appBorrowings=loanRows;appHistory=historyRows;
+    refreshApiBookFilters();
+  if(render)switchApiAppTab(currentAppTab);
+}
+  function refreshApiBookFilters(){
+    const categoryFilter=document.getElementById("appBookCategoryFilter");if(!categoryFilter)return;
+    const selected=categoryFilter.value,categories=[...new Set(books.map(book=>String(book.category||"").trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"vi"));
+    categoryFilter.innerHTML='<option value="all">Tất cả thể loại</option>'+categories.map(name=>`<option value="${apiEscapeHTML(name)}">${apiEscapeHTML(name)}</option>`).join("");
+    categoryFilter.value=categories.includes(selected)?selected:"all";
+  }
+async function addAdminHistory(event){
+  try{return await window.bookinApi.addHistory({...event,userId:"Quản trị viên"});}
+  catch(error){console.error("Không ghi được lịch sử giao dịch:",error);const status=document.getElementById("appApiStatus");if(status){status.textContent=`Không ghi được lịch sử: ${error.message}`;status.classList.add("is-error");}return null;}
+}
+function switchApiAppTab(tabName){
+  currentAppTab=tabName;
+  document.querySelectorAll(".sidebar-nav-item").forEach(item=>item.classList.toggle("is-active",item.dataset.appTab===tabName));
+  document.querySelectorAll(".app-section").forEach(section=>section.classList.toggle("is-active",section.id===`section-${tabName}`));
+  const titles={overview:["Xin chào, Chủ thư viện","Tổng quan hoạt động thư viện hôm nay"],books:["Quản lý kho sách và tồn kho","Nhập sách mới, điều chỉnh số lượng bản sách"],borrowers:["Quản lý người mượn","Thông tin người mượn do quản trị viên quản lý"],transactions:["Mượn và trả tại quầy","Tạo phiếu mượn và ghi nhận trả sách"],history:["Lịch sử hoạt động","Giao dịch và cập nhật tồn kho"],statistics:["Thống kê và quá hạn","Theo dõi tồn kho và phiếu cần nhắc"]};
+  const [title,subtitle]=titles[tabName]||titles.overview;
+  const head=document.getElementById("appHeaderTitle"),sub=document.getElementById("appHeaderSubtitle");if(head)head.textContent=title;if(sub)sub.textContent=subtitle;
+  const renderers={overview:renderApiOverview,books:renderApiBooks,borrowers:renderApiBorrowers,transactions:renderApiTransactions,history:renderApiHistory,statistics:renderApiStatistics};
+  renderers[tabName]?.();
+}
+function appDateAfterDays(days){const date=new Date();date.setHours(0,0,0,0);date.setDate(date.getDate()+days);return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;}
+function renderApiOverviewBase(){
+  const loans=appLoanRows(),total=books.reduce((sum,b)=>sum+Number(b.totalQuantity||0),0),available=books.reduce((sum,b)=>sum+Number(b.availableQuantity||0),0),borrowed=loans.filter(isOpenBorrowing).reduce((sum,l)=>sum+appLoanRemaining(l),0),overdue=new Set(loans.filter(l=>l.isOverdue).map(l=>l.ticketCode)).size;
+  const values={dashTitleCount:books.length,dashTotalCopies:total,dashAvailableCopies:available,dashBorrowedCount:borrowed,dashOverdueCount:overdue};Object.entries(values).forEach(([id,value])=>{const node=document.getElementById(id);if(node)node.textContent=value;});
+  const low=books.filter(book=>Number(book.availableQuantity||0)<=2),lowWrap=document.getElementById("dashLowStockTableWrap");
+  if(lowWrap)lowWrap.innerHTML=low.length?`<table><thead><tr><th>Sách</th><th>Tổng cuốn</th><th>Có sẵn</th><th></th></tr></thead><tbody>${low.map(book=>`<tr><td><strong>${apiEscapeHTML(book.title)}</strong><small>${apiEscapeHTML(book.author)}</small></td><td>${book.totalQuantity}</td><td>${book.availableQuantity}</td><td><button type="button" class="admin-action" onclick="openAppBookDialogForEdit('${apiEscapeHTML(book.id)}')">Điều chỉnh</button></td></tr>`).join("")}</tbody></table>`:'<p class="admin-empty">Không có sách sắp hết.</p>';
+  const recent=loans.slice().sort((a,b)=>new Date(b.borrowDate)-new Date(a.borrowDate)).slice(0,5),recentWrap=document.getElementById("dashRecentLoansWrap"),readers=new Map(users.map(reader=>[String(reader.id),reader]));
+  if(recentWrap)recentWrap.innerHTML=recent.length?`<table><thead><tr><th>Người mượn</th><th>Sách</th><th>Ngày mượn</th><th>Trạng thái</th></tr></thead><tbody>${recent.map(loan=>{const book=appBookById(loan.bookId),reader=readers.get(String(loan.borrowerId));return `<tr><td>${apiEscapeHTML(reader?.name||loan.borrowerName||"")}</td><td>${apiEscapeHTML(book?.title||loan.bookTitle||"")}</td><td>${apiEscapeHTML(loan.borrowDate||"")}</td><td>${loan.isOverdue?"Quá hạn":loan.status==="returned"?"Đã trả":"Đang mượn"}</td></tr>`;}).join("")}</tbody></table>`:'<p class="admin-empty">Chưa có phiếu mượn.</p>';
+  const today=appTodayISO(),cutoff=appDateAfterDays(7),dueSoon=loans.filter(loan=>isOpenBorrowing(loan)&&!loan.isOverdue&&loan.dueDate>=today&&loan.dueDate<=cutoff).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,10),dueWrap=document.getElementById("dashDueSoonTableWrap");
+  if(dueWrap)dueWrap.innerHTML=dueSoon.length?`<table><thead><tr><th>Mã phiếu</th><th>Người mượn</th><th>Sách</th><th>Hạn trả</th><th>Nhắc hạn</th></tr></thead><tbody>${dueSoon.map(loan=>{const book=appBookById(loan.bookId),reader=readers.get(String(loan.borrowerId)),days=Math.max(0,Math.round((Date.parse(loan.dueDate)-Date.parse(today))/86400000)),reminder=days===0?"Đến hạn hôm nay":`Còn ${days} ngày`;return `<tr><td>${apiEscapeHTML(loan.id)}</td><td>${apiEscapeHTML(reader?.name||loan.borrowerName||"")}</td><td>${apiEscapeHTML(book?.title||loan.bookTitle||"")}</td><td>${apiEscapeHTML(loan.dueDate)}</td><td>${reminder}</td></tr>`;}).join("")}</tbody></table>`:'<p class="admin-empty">Không có phiếu sắp đến hạn trong 7 ngày tới.</p>';
+}
+function renderApiOverview(){
+  renderApiOverviewBase();
+  const loans=appLoanRows(),readers=new Map(users.map(reader=>[String(reader.id),reader]));
+  const overdue=loans.filter(loan=>loan.isOverdue).sort((a,b)=>String(a.dueDate).localeCompare(String(b.dueDate))).slice(0,5),overdueWrap=document.getElementById("dashOverdueLoansWrap");
+  if(overdueWrap)overdueWrap.innerHTML=overdue.length?`<table><thead><tr><th>Phiếu</th><th>Người mượn</th><th>Sách</th><th>Hạn trả</th><th></th></tr></thead><tbody>${overdue.map(loan=>{const reader=readers.get(String(loan.borrowerId)),book=appBookById(loan.bookId);return `<tr><td>${apiEscapeHTML(loan.id)}</td><td>${apiEscapeHTML(reader?.name||loan.borrowerName||"")}</td><td>${apiEscapeHTML(book?.title||loan.bookTitle||"")}</td><td>${apiEscapeHTML(loan.dueDate||"")}</td><td><button type="button" class="admin-action" onclick="openAppLoanRecord('${apiEscapeHTML(loan.id)}','overdue')">Mở phiếu</button></td></tr>`;}).join("")}</tbody></table>`:'<p class="admin-empty">Không có phiếu quá hạn.</p>';
+  const recentEvents=apiHistoryEvents().slice().sort((a,b)=>new Date(b.date||0)-new Date(a.date||0)).slice(0,5),activityWrap=document.getElementById("dashRecentActivityWrap");
+  if(activityWrap)activityWrap.innerHTML=recentEvents.length?`<table><thead><tr><th>Thời gian</th><th>Giao dịch</th><th>Liên quan</th><th></th></tr></thead><tbody>${recentEvents.map(event=>{const reader=readers.get(String(event.borrowerId)),when=event.date?new Date(event.date.length===10?`${event.date}T00:00:00`:event.date).toLocaleDateString("vi-VN"):"—",related=reader?.name||event.borrowerName||appBookById(event.bookId)?.title||event.bookTitle||"";return `<tr><td>${apiEscapeHTML(when)}</td><td>${apiEscapeHTML(event.action||"")}</td><td>${apiEscapeHTML(related)}</td><td><button type="button" class="admin-action" onclick="openAppHistoryRecord('${apiEscapeHTML(event.loanId||event.id||"")}')">Xem</button></td></tr>`;}).join("")}</tbody></table>`:'<p class="admin-empty">Chưa có giao dịch nào được ghi nhận.</p>';
+}
+function openAppLoanFilter(filter="all"){
+  const status=document.getElementById("appLoanStatusFilter"),search=document.getElementById("appLoanSearch");
+  if(status)status.value=filter;if(search)search.value="";["appLoanDateFrom","appLoanDateTo"].forEach(id=>{const input=document.getElementById(id);if(input)input.value="";});switchAppTab("transactions");
+}
+function openAppLoanRecord(loanId,filter="all"){
+  const status=document.getElementById("appLoanStatusFilter"),search=document.getElementById("appLoanSearch");
+  if(status)status.value=filter;if(search)search.value=String(loanId||"");["appLoanDateFrom","appLoanDateTo"].forEach(id=>{const input=document.getElementById(id);if(input)input.value="";});switchAppTab("transactions");
+}
+function openAppHistoryRecord(recordId){
+  const record=apiHistoryEvents().find(event=>String(event.id||"")===String(recordId||"")||String(event.loanId||"")===String(recordId||"")||String(event.ticketId||"")===String(recordId||""));
+  if(record){const loan=appBorrowings.find(item=>String(item.id)===String(record.loanId||""))||appBorrowings.find(item=>String(item.ticketId||item.id)===String(record.ticketId||""));if(loan){viewAppLoanTicket(String(record.ticketId||loan.ticketId||loan.id));return;}}
+  const search=document.getElementById("appHistorySearch"),filter=document.getElementById("appHistoryFilter");
+  if(search)search.value=String(recordId||"");if(filter)filter.value="all";switchAppTab("history");
+}
+function renderApiBooks(){
+  const wrap = document.getElementById("appBookTableWrap");
+  if (!wrap) return;
+
+  const query = normalize(
+    document.getElementById("appBookSearch")?.value || ""
+  );
+  const category =
+    document.getElementById("appBookCategoryFilter")?.value || "all";
+  const status =
+    document.getElementById("appBookStatusFilter")?.value || "all";
+  const sort =
+    document.getElementById("appBookSort")?.value || "default";
+
+  const rows = books.filter(book => {
+    const available = Number(book.availableQuantity ?? 0);
+    const stock = available === 0
+      ? "empty"
+      : available <= 2 ? "low" : "available";
+
+    return (
+      (!query || normalize(
+        `${book.id} ${book.title} ${book.author || ""}`
+      ).includes(query)) &&
+      (category === "all" || String(book.category) === category) &&
+      (status === "all" || stock === status)
+    );
+  });
+
+  const compare = (a, b) =>
+    String(a ?? "").localeCompare(String(b ?? ""), "vi", {
+      sensitivity: "base"
+    });
+
+  if (sort === "title-asc") {
+    rows.sort((a, b) => compare(a.title, b.title));
+  } else if (sort === "title-desc") {
+    rows.sort((a, b) => compare(b.title, a.title));
+  } else if (sort === "author-asc") {
+    rows.sort((a, b) => compare(a.author, b.author));
+  } else if (sort === "year-desc") {
+    rows.sort((a, b) => Number(b.year || 0) - Number(a.year || 0));
+  } else if (sort === "stock-asc") {
+    rows.sort((a, b) =>
+      Number(a.availableQuantity ?? 0) -
+      Number(b.availableQuantity ?? 0)
+    );
+  } else if (sort === "stock-desc") {
+    rows.sort((a, b) =>
+      Number(b.availableQuantity ?? 0) -
+      Number(a.availableQuantity ?? 0)
+    );
+  }
+
+  const pageSize = 10;
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+
+  window.appBookPage = Math.min(
+    Math.max(1, window.appBookPage || 1),
+    pageCount
+  );
+
+  const start = (window.appBookPage - 1) * pageSize;
+  const pageRows = rows.slice(start, start + pageSize);
+
+  wrap.innerHTML = pageRows.length
+    ? `<table>
+        <thead>
+          <tr>
+            <th>Mã sách</th>
+            <th>Tên sách</th>
+            <th>Tác giả</th>
+            <th>Thể loại</th>
+            <th>Tổng số bản</th>
+            <th>Số bản còn</th>
+            <th>Trạng thái tồn kho</th>
+            <th>Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pageRows.map(book => {
+            const available = Number(book.availableQuantity ?? 0);
+            const total = Number(book.totalQuantity ?? 0);
+            const stock = available === 0
+              ? "empty"
+              : available <= 2 ? "low" : "high";
+            const label = available === 0
+              ? "Hết sách"
+              : available <= 2 ? "Sắp hết" : "Còn sách";
+
+            return `<tr>
+              <td>${apiEscapeHTML(book.id)}</td>
+              <td><strong>${apiEscapeHTML(book.title)}</strong></td>
+              <td>${apiEscapeHTML(book.author)}</td>
+              <td>${apiEscapeHTML(book.category)}</td>
+              <td>${total}</td>
+              <td>${available}</td>
+              <td>
+                <span class="admin-stock-badge ${stock}">${label}</span>
+              </td>
+              <td>
+                <button class="admin-action" type="button"
+                  onclick="openAppBookDetail('${apiEscapeHTML(book.id)}')">Chi tiết</button>
+                <button class="admin-action" type="button"
+                  onclick="openAppBookDialogForEdit('${apiEscapeHTML(book.id)}')">Sửa</button>
+                <button class="admin-action delete-book" type="button"
+                  onclick="deleteAppBook('${apiEscapeHTML(book.id)}')">Xóa</button>
+              </td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>`
+    : `<p class="admin-empty">${
+        books.length
+          ? "Không có sách phù hợp với bộ lọc."
+          : "Kho sách chưa có đầu sách nào."
+      }</p>`;
+
+  const pagination = document.getElementById("appBookPagination");
+  if (!pagination) return;
+
+  pagination.innerHTML = `
+    <span>Hiển thị ${rows.length ? start + 1 : 0}–${Math.min(
+      start + pageSize, rows.length
+    )} trong ${rows.length} đầu sách</span>
+    <div>
+      <button class="admin-action" type="button"
+        id="appBookPrevPage" ${window.appBookPage <= 1 ? "disabled" : ""}>
+        Trang trước
+      </button>
+      <span>Trang ${window.appBookPage}/${pageCount}</span>
+      <button class="admin-action" type="button"
+        id="appBookNextPage" ${window.appBookPage >= pageCount ? "disabled" : ""}>
+        Trang sau
+      </button>
+    </div>`;
+
+  pagination.querySelector("#appBookPrevPage")?.addEventListener("click", () => {
+    if (window.appBookPage > 1) {
+      window.appBookPage--;
+      renderApiBooks();
+    }
+  });
+
+  pagination.querySelector("#appBookNextPage")?.addEventListener("click", () => {
+    if (window.appBookPage < pageCount) {
+      window.appBookPage++;
+      renderApiBooks();
+    }
+  });
+}
+function openAppBookDetail(bookId){
+  const book=appBookById(bookId),dialog=document.getElementById("appBookDetailDialog"),content=document.getElementById("appBookDetailContent");
+  if(!book||!dialog||!content)return;
+  document.getElementById("appBookDetailTitle").textContent=book.title||"Thông tin đầu sách";
+  const available=Number(book.availableQuantity??0),stockLabel=available===0?"Hết sách":available<=2?"Sắp hết":"Còn sách";
+  const fields=[["Mã sách",book.id],["Tác giả",book.author],["Thể loại",book.category],["Năm xuất bản",book.year],["Tổng số bản",book.totalQuantity],["Số bản còn",book.availableQuantity],["Đang được mượn",appBorrowings.filter(loan=>String(loan.bookId)===String(book.id)&&isOpenBorrowing(loan)).reduce((sum,loan)=>sum+appLoanRemaining(loan),0)],["Trạng thái tồn kho",stockLabel],["Nhà xuất bản",book.publisher],["Mô tả",book.description]];
+  const visibleFields=fields.filter(([,value])=>value!==undefined&&value!==null&&value!=="");
+  content.innerHTML=visibleFields.map(([label,value],index)=>`<div class="book-detail-item${index===visibleFields.length-1?" is-wide":""}"><small>${apiEscapeHTML(label)}</small><strong>${apiEscapeHTML(value)}</strong></div>`).join("");
+  dialog.showModal();
+}
+function renderApiBorrowers(){
+  const wrap=document.getElementById("appBorrowerTableWrap");if(!wrap)return;
+  const query=normalize(document.getElementById("appBorrowerSearch")?.value||""),status=document.getElementById("appBorrowerStatusFilter")?.value||"all",loans=appLoanRows(),rows=users.filter(reader=>{const matchesQuery=!query||normalize(`${reader.name} ${reader.phone||""} ${reader.email||""} ${reader.id}`).includes(query),matchesStatus=status==="all"||(status==="inactive"?reader.status==="inactive":reader.status!=="inactive");return matchesQuery&&matchesStatus;});
+  wrap.innerHTML=rows.length?`<table><thead><tr><th>Người mượn</th><th>Mã</th><th>Số điện thoại</th><th>Email</th><th>Đang mượn</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>${rows.map(reader=>{const count=loans.filter(loan=>String(loan.borrowerId)===String(reader.id)&&isOpenBorrowing(loan)).reduce((sum,loan)=>sum+appLoanRemaining(loan),0);return `<tr><td><strong>${apiEscapeHTML(reader.name)}</strong></td><td>${apiEscapeHTML(reader.id)}</td><td>${apiEscapeHTML(reader.phone||"—")}</td><td>${apiEscapeHTML(reader.email||"—")}</td><td>${count} bản</td><td>${reader.status==="inactive"?"Ngừng hoạt động":"Đang hoạt động"}</td><td><button class="admin-action" type="button" onclick="viewAppBorrower('${apiEscapeHTML(reader.id)}')">Xem</button> <button class="admin-action" type="button" onclick="openAppBorrowerDialog('${apiEscapeHTML(reader.id)}')">Sửa</button> <button class="admin-action delete-book" type="button" onclick="deleteAppBorrower('${apiEscapeHTML(reader.id)}')">Xóa</button></td></tr>`;}).join("")}</tbody></table>`:'<p class="admin-empty">Không tìm thấy người mượn phù hợp.</p>';
+}
+function viewAppBorrower(borrowerId){
+  const reader=users.find(item=>String(item.id)===String(borrowerId)),dialog=document.getElementById("appBorrowerDetailDialog"),content=document.getElementById("appBorrowerDetailContent");if(!reader||!dialog||!content)return;
+  const activeCount=appBorrowings.filter(loan=>String(loan.borrowerId)===String(reader.id)&&isOpenBorrowing(loan)).length;
+  document.getElementById("appBorrowerDetailTitle").textContent=reader.name||"Thông tin người mượn";
+  const fields=[["Mã người mượn",reader.id],["Họ và tên",reader.name],["Số điện thoại",reader.phone||"Chưa cập nhật"],["Email",reader.email||"Chưa cập nhật"],["Ngày tạo hồ sơ",reader.joinedAt||"Chưa có"],["Phiếu đang mượn",activeCount],["Trạng thái",reader.status==="inactive"?"Ngừng hoạt động":"Đang hoạt động"]];
+  const tickets=new Map();appLoanRows().filter(loan=>String(loan.borrowerId)===String(reader.id)).forEach(loan=>{const rows=tickets.get(loan.ticketCode)||[];rows.push(loan);tickets.set(loan.ticketCode,rows);});
+  const ticketList=tickets.size?[...tickets.entries()].sort((a,b)=>String(b[1][0].borrowDate||"").localeCompare(String(a[1][0].borrowDate||""))).map(([ticketCode,rows])=>{const openRows=rows.filter(isOpenBorrowing),status=openRows.some(loan=>loan.isOverdue)?"Quá hạn":openRows.length?"Đang mượn":"Đã trả",copies=rows.reduce((sum,loan)=>sum+Number(loan.quantity||0),0),remaining=rows.reduce((sum,loan)=>sum+appLoanRemaining(loan),0);return `<article class="book-detail-item is-wide"><small>Phiếu ${apiEscapeHTML(ticketCode)} · ${apiEscapeHTML(rows[0].borrowDate||"—")} · Hạn trả ${apiEscapeHTML(rows[0].dueDate||"—")}</small><strong>${status} · ${copies} bản trong ${rows.length} đầu sách · còn ${remaining} bản chưa trả</strong><div>${rows.map(loan=>`${apiEscapeHTML(appBookById(loan.bookId)?.title||loan.bookTitle||"Sách")} (${appLoanRemaining(loan)} còn/${Number(loan.quantity||0)} bản)`).join("<br>")}</div><button class="admin-action" type="button" data-view-ticket="${apiEscapeHTML(ticketCode)}">Xem chi tiết phiếu</button></article>`;}).join(""):'<p class="admin-empty is-wide">Người mượn này chưa có phiếu mượn.</p>';
+  content.innerHTML=fields.map(([label,value])=>`<div class="book-detail-item"><small>${apiEscapeHTML(label)}</small><strong>${apiEscapeHTML(value)}</strong></div>`).join("")+`<div class="book-detail-item is-wide"><small>LỊCH SỬ PHIẾU MƯỢN (${tickets.size})</small><div class="borrower-ticket-list">${ticketList}</div></div>`;dialog.showModal();
+  content.querySelectorAll("[data-view-ticket]").forEach(button=>{const creator=appLoanRows().filter(loan=>String(loan.ticketCode)===String(button.dataset.viewTicket)).find(loan=>loan.createdByName)?.createdByName||"Chưa ghi nhận";const label=document.createElement("small");label.className="borrower-ticket-creator";label.textContent=`Nhân viên lập phiếu: ${creator}`;button.before(label);});
+}
+function viewAppLoanTicket(ticketCode){
+  const rows=appLoanRows().filter(loan=>String(loan.ticketCode)===String(ticketCode));if(!rows.length){showNoticeDialog("Không tìm thấy phiếu",`Không có dữ liệu cho phiếu ${ticketCode}.`);return;}
+  const reader=users.find(item=>String(item.id)===String(rows[0].borrowerId)),activeRows=rows.filter(isOpenBorrowing),status=activeRows.some(loan=>loan.isOverdue)?"Quá hạn":activeRows.length?"Đang mượn":"Đã trả",borrowDate=rows[0].borrowDate||"—",dueDate=rows[0].dueDate||"—";
+  const lines=rows.map(loan=>{const book=appBookById(loan.bookId),quantity=Number(loan.quantity||0),returned=appLoanReturned(loan),remaining=appLoanRemaining(loan),lineStatus=loan.status==="returned"?`Đã trả${loan.returnDate?` ngày ${apiEscapeHTML(loan.returnDate)}`:""}`:loan.isOverdue?"Quá hạn":returned?"Trả một phần":"Đang mượn";return `<tr><td>${apiEscapeHTML(book?.title||loan.bookTitle||"Sách không xác định")}</td><td>${quantity}</td><td>${returned}</td><td>${remaining}</td><td>${lineStatus}</td></tr>`;}).join("");
+  const dialog=document.createElement("dialog");dialog.className="admin-book-dialog app-ticket-detail-dialog";dialog.innerHTML=`<div class="admin-book-form"><div class="admin-book-dialog-heading"><div><span>CHI TIẾT PHIẾU MƯỢN</span><h2>${apiEscapeHTML(ticketCode)}</h2></div><button class="admin-dialog-close" type="button" aria-label="Đóng"><i class="fa-solid fa-xmark"></i></button></div><div class="book-detail-grid"><div class="book-detail-item"><small>Người mượn</small><strong>${apiEscapeHTML(reader?.name||rows[0].borrowerName||"Không rõ")}</strong></div><div class="book-detail-item"><small>Mã người mượn</small><strong>${apiEscapeHTML(rows[0].borrowerId)}</strong></div><div class="book-detail-item"><small>Số điện thoại</small><strong>${apiEscapeHTML(reader?.phone||"Chưa cập nhật")}</strong></div><div class="book-detail-item"><small>Email</small><strong>${apiEscapeHTML(reader?.email||"Chưa cập nhật")}</strong></div><div class="book-detail-item"><small>Ngày mượn</small><strong>${apiEscapeHTML(borrowDate)}</strong></div><div class="book-detail-item"><small>Hạn trả</small><strong>${apiEscapeHTML(dueDate)}</strong></div><div class="book-detail-item"><small>Trạng thái phiếu</small><strong>${status}</strong></div></div><div class="admin-table-wrap app-ticket-detail-table"><table><thead><tr><th>Sách</th><th>Đã mượn</th><th>Đã trả</th><th>Còn mượn</th><th>Trạng thái</th></tr></thead><tbody>${lines}</tbody></table></div><div class="admin-book-dialog-actions"><button class="admin-dialog-cancel" type="button">Đóng</button></div></div>`;
+  const creator=rows.find(loan=>loan.createdByName)?.createdByName||"Chưa ghi nhận",creatorItem=document.createElement("div");creatorItem.className="book-detail-item";creatorItem.innerHTML=`<small>Nhân viên lập phiếu</small><strong>${apiEscapeHTML(creator)}</strong>`;dialog.querySelector(".book-detail-grid")?.append(creatorItem);
+  document.body.append(dialog);const close=()=>{dialog.close();dialog.remove();};dialog.querySelectorAll(".admin-dialog-close,.admin-dialog-cancel").forEach(button=>button.addEventListener("click",close));dialog.addEventListener("click",event=>{if(event.target===dialog)close();});dialog.showModal();
+}
+function openAppBorrowerDialog(borrowerId=null){
+  const reader=borrowerId==null?null:users.find(item=>String(item.id)===String(borrowerId)),dialog=document.getElementById("appBorrowerDialog"),form=document.getElementById("appBorrowerForm");if(!dialog||!form)return;
+  form.reset();form.elements.id.value=reader?.id||"";form.elements.name.value=reader?.name||"";form.elements.phone.value=reader?.phone||"";form.elements.email.value=reader?.email||"";
+  setAdminFormFeedback("appBorrowerMessage","");
+  document.getElementById("appBorrowerDialogTitle").textContent=reader?"Cập nhật hồ sơ người mượn":"Thêm người mượn mới";document.getElementById("appBorrowerSaveBtn").textContent=reader?"Lưu thay đổi":"Thêm người mượn";dialog.showModal();
+}
+async function deleteAppBorrower(borrowerId){
+  const reader=users.find(item=>String(item.id)===String(borrowerId)),key=`borrower:${borrowerId}`;if(!reader||appDeletingRecords.has(key))return;
+  let active;try{const currentLoans=await window.bookinApi.getBorrowings();active=currentLoans.filter(loan=>String(loan.borrowerId)===String(reader.id)&&isOpenBorrowing(loan));}catch(error){showNoticeDialog("Không thể kiểm tra phiếu mượn",`Chưa xóa hồ sơ vì không tải được danh sách phiếu mượn: ${error.message}`);return;}if(active.length){showNoticeDialog("Không thể xóa người mượn",`${reader.name} còn ${active.length} phiếu mượn chưa hoàn tất. Hãy ghi nhận trả sách trước khi xóa hồ sơ.`);return;}
+  showConfirmDialog({title:"Xóa hồ sơ người mượn?",message:`Hồ sơ của ${reader.name} sẽ bị xóa khỏi danh sách. Thao tác này không thể hoàn tác.`,confirmText:"Xóa hồ sơ",onConfirm:async()=>{
+    appDeletingRecords.add(key);setAdminBusyStatus(`Đang xóa hồ sơ ${reader.name}…`);try{await window.bookinApi.deleteBorrower(reader.id);await refreshAdminApiData();showNoticeDialog("Đã xóa hồ sơ",`Hồ sơ người mượn ${reader.name} đã được xóa.`);}
+    catch(error){try{await refreshAdminApiData();}catch(refreshError){console.error("Không thể làm mới dữ liệu người mượn:",refreshError);}showNoticeDialog("Không thể xóa hồ sơ",`Chưa xóa được hồ sơ ${reader.name}. ${error.message}`);}
+    finally{appDeletingRecords.delete(key);setAdminBusyStatus();}
+  }});
+}
+function renderApiTransactions(){
+  const wrap=document.getElementById("appLoanTableWrap");if(!wrap)return;
+  const query=normalize(document.getElementById("appLoanSearch")?.value||""),filter=document.getElementById("appLoanStatusFilter")?.value||"all",dateField=document.getElementById("appLoanDateField")?.value||"borrowDate",dateFrom=document.getElementById("appLoanDateFrom")?.value||"",dateTo=document.getElementById("appLoanDateTo")?.value||"",readers=new Map(users.map(reader=>[String(reader.id),reader]));
+  const rows=appLoanRows().filter(loan=>{const book=appBookById(loan.bookId),reader=readers.get(String(loan.borrowerId)),late=loan.isOverdue,text=normalize(`${loan.ticketCode} ${loan.id} ${book?.title||loan.bookTitle||""} ${book?.author||""} ${reader?.name||loan.borrowerName||""} ${reader?.email||""}`),dateValue=String(loan[dateField]||""),matchesDate=(!dateFrom||(dateValue&&dateValue>=dateFrom))&&(!dateTo||(dateValue&&dateValue<=dateTo));return (!query||text.includes(query))&&matchesDate&&(filter==="all"||(filter==="overdue"?late:filter==="active"?isOpenBorrowing(loan)&&!late:loan.status===filter));}).sort((a,b)=>{const dateDiff=new Date(b.borrowDate)-new Date(a.borrowDate);if(dateDiff)return dateDiff;const numberA=Number(String(a.ticketCode).match(/\d+/)?.[0]||0),numberB=Number(String(b.ticketCode).match(/\d+/)?.[0]||0);return numberB-numberA;});
+  wrap.innerHTML=rows.length?`<table><thead><tr><th>Mã phiếu</th><th>Người mượn</th><th>Sách</th><th>Số lượng</th><th>Ngày mượn</th><th>Hạn trả</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>${rows.map(loan=>{const book=appBookById(loan.bookId),reader=readers.get(String(loan.borrowerId)),late=loan.isOverdue,open=isOpenBorrowing(loan),quantity=Number(loan.quantity||1),remaining=appLoanRemaining(loan),returned=appLoanReturned(loan);return `<tr><td class="loan-ticket-code">${apiEscapeHTML(loan.ticketCode)}</td><td class="loan-borrower-cell"><strong>${apiEscapeHTML(reader?.name||loan.borrowerName||"")}</strong>${reader?.email?`<small>${apiEscapeHTML(reader.email)}</small>`:""}</td><td>${apiEscapeHTML(book?.title||loan.bookTitle||"")}</td><td>${remaining}${returned>0?` còn / ${quantity} bản`:` bản`}</td><td>${apiEscapeHTML(loan.borrowDate||"")}</td><td>${apiEscapeHTML(loan.dueDate||"")}</td><td>${late?"Quá hạn":loan.status==="returned"?"Đã trả":returned>0?"Trả một phần":"Đang mượn"}</td><td><button class="admin-action" type="button" data-view-ticket="${apiEscapeHTML(loan.ticketCode)}">Xem phiếu</button> ${open?`<button class="admin-action return" type="button" onclick="appReturnLoan('${apiEscapeHTML(loan.id)}')">Xác nhận trả</button> <button class="admin-action" type="button" onclick="appExtendLoan('${apiEscapeHTML(loan.id)}')">Gia hạn 7 ngày</button> ${!late?`<button class="admin-action loan-add-to-ticket" type="button" data-ticket-id="${apiEscapeHTML(loan.ticketCode)}" data-borrower-id="${apiEscapeHTML(loan.borrowerId)}">Thêm sách</button>`:""}`:""}</td></tr>`;}).join("")}</tbody></table>`:'<p class="admin-empty">Không có phiếu phù hợp.</p>';
+}
+function openAppAddBookToTicket(ticketCode,borrowerId){
+  const dialog=document.getElementById("appLoanDialog"),form=document.getElementById("appLoanForm"),readerSelect=document.getElementById("appLoanReaderSelect"),bookSelect=document.getElementById("appLoanBookSelect"),message=document.getElementById("appLoanMessage"),group=appLoanRows().filter(loan=>String(loan.ticketCode)===String(ticketCode)&&String(loan.borrowerId)===String(borrowerId)&&isOpenBorrowing(loan)&&!loan.isOverdue);
+  if(!group.length){showNoticeDialog("Không thể bổ sung sách","Phiếu không còn ở trạng thái đang mượn hoặc đã quá hạn.");return;}
+  form.reset();appLoanCart=[];renderAppLoanCart();message.textContent="";message.classList.remove("is-error","is-success","is-loading","is-warning");
+  readerSelect.innerHTML='<option value="">-- Chọn người mượn --</option>'+users.filter(reader=>reader.status!=="inactive").map(reader=>`<option value="${apiEscapeHTML(reader.id)}">${apiEscapeHTML(reader.name)} (${apiEscapeHTML(reader.email||reader.phone||"không có liên hệ")})</option>`).join("");readerSelect.value=String(borrowerId);readerSelect.disabled=true;
+  bookSelect.innerHTML='<option value="">-- Chọn sách --</option>'+books.filter(book=>Number(book.availableQuantity)>0).map(book=>`<option value="${apiEscapeHTML(book.id)}">${apiEscapeHTML(book.title)} (còn ${book.availableQuantity}/${book.totalQuantity})</option>`).join("");
+  form.elements.ticketId.value=String(ticketCode);form.elements.createdByName.value=group.find(loan=>loan.createdByName)?.createdByName||"Chưa ghi nhận";form.elements.createdByName.readOnly=true;form.elements.borrowDate.value=group[0].borrowDate;form.elements.dueDate.value=group[0].dueDate;form.elements.borrowDate.readOnly=true;form.elements.dueDate.readOnly=true;document.getElementById("appLoanDialogTitle").textContent=`BỔ SUNG SÁCH · ${ticketCode}`;document.getElementById("appLoanSaveBtn").textContent="THÊM VÀO PHIẾU";dialog.showModal();
+}
+function renderApiHistory(){
+  const wrap=document.getElementById("appHistoryWrap");if(!wrap)return;const historyEvents=apiHistoryEvents(),query=normalize(document.getElementById("appHistorySearch")?.value||""),filter=document.getElementById("appHistoryFilter")?.value||"all",readers=new Map(users.map(reader=>[String(reader.id),reader]));
+  const rows=historyEvents.filter(event=>{const action=normalize(event.action),book=appBookById(event.bookId),reader=readers.get(String(event.borrowerId)),text=normalize(`${event.id||""} ${event.date||""} ${event.action||""} ${event.userId||""} ${reader?.name||event.borrowerName||""} ${book?.title||event.bookTitle||""} ${event.details||""}`),matchesFilter=filter==="all"||(filter==="borrow"&&action.includes(normalize("m\u01b0\u1ee3n")))||(filter==="return"&&(action.includes(normalize("tr\u1ea3"))||action.includes("return")))||(filter==="book"&&(action.includes(normalize("\u0111\u1ea7u s\u00e1ch"))||action.includes(normalize("qu\u1ea3n l\u00fd s\u00e1ch"))));return matchesFilter&&(!query||text.includes(query));}).slice().sort((a,b)=>new Date(b.date||0)-new Date(a.date||0));
+  wrap.innerHTML=rows.length?`<table><thead><tr><th>Thời gian</th><th>Hành động</th><th>Người liên quan</th><th>Sách</th><th>Chi tiết</th></tr></thead><tbody>${rows.map(event=>{const isDateOnly=/^\d{4}-\d{2}-\d{2}$/.test(event.date||""),timestamp=event.date?new Date(isDateOnly?`${event.date}T00:00:00`:event.date):null,when=timestamp&&!Number.isNaN(timestamp.getTime())?(isDateOnly?timestamp.toLocaleDateString("vi-VN"):timestamp.toLocaleString("vi-VN")):"Chưa có thời gian",reader=readers.get(String(event.borrowerId));return `<tr><td>${apiEscapeHTML(when)}</td><td>${apiEscapeHTML(event.action||"")}</td><td>${apiEscapeHTML(reader?.name||event.borrowerName||event.userId||"Quản trị viên")}</td><td>${apiEscapeHTML(appBookById(event.bookId)?.title||event.bookTitle||"—")}</td><td>${apiEscapeHTML(event.details||"")}</td></tr>`;}).join("")}</tbody></table>`:`<p class="admin-empty">${historyEvents.length?"Không có hoạt động phù hợp với bộ lọc.":"JSON Server chưa có lịch sử giao dịch."}</p>`;
+  const historyTable=wrap.querySelector("table");if(historyTable){const header=historyTable.tHead?.rows[0];header?.insertBefore(Object.assign(document.createElement("th"),{textContent:"Nhân viên lập phiếu"}),header.cells[2]||null);rows.forEach((event,index)=>{const row=historyTable.tBodies[0]?.rows[index];if(!row)return;const linkedLoan=appBorrowings.find(loan=>String(loan.id)===String(event.loanId))||appBorrowings.find(loan=>String(loan.ticketId||loan.id)===String(event.ticketId||"")),creator=event.createdByName||linkedLoan?.createdByName||"—",cell=document.createElement("td");cell.textContent=creator;row.insertBefore(cell,row.cells[2]||null);});}
+}
+function apiHistoryEvents(){
+  const derived=[];
+  appBorrowings.forEach(loan=>{
+    const actions=[{kind:"borrow",action:"Tạo phiếu mượn",date:loan.borrowDate,details:`Phiếu ${loan.id}: ${loan.borrowerName||"Người mượn"} mượn ${Number(loan.quantity||0)} bản “${loan.bookTitle||appBookById(loan.bookId)?.title||"Sách"}”.` }];
+    if(loan.returnDate)actions.push({kind:"return",action:"Xác nhận trả sách",date:loan.returnDate,details:`Phiếu ${loan.id}: đã ghi nhận trả ${Number(loan.quantity||0)} bản.`});
+    actions.forEach(item=>{const duplicate=appHistory.some(event=>{if(item.kind==="borrow"&&loan.ticketId&&String(event.ticketId||"")===String(loan.ticketId))return true;if(String(event.loanId||"")===String(loan.id))return normalize(event.action).includes(normalize(item.kind==="borrow"?"mượn":"trả"));const eventDate=String(event.date||"").slice(0,10),action=normalize(event.action);return String(event.bookId)===String(loan.bookId)&&eventDate===String(item.date||"")&&(item.kind==="borrow"?action.includes(normalize("mượn")):action.includes(normalize("trả"))||action.includes("return"));});if(!duplicate)derived.push({id:`derived-${loan.id}-${item.kind}`,date:item.date,action:item.action,loanId:loan.id,ticketId:loan.ticketId||loan.id,borrowerId:loan.borrowerId,borrowerName:loan.borrowerName,bookId:loan.bookId,bookTitle:loan.bookTitle,details:item.details});});
+  });
+  return [...appHistory,...derived];
+}
+function renderApiStatisticsBase(){
+  const loans=appLoanRows(),openLoans=loans.filter(isOpenBorrowing),overdueLoans=loans.filter(loan=>loan.isOverdue),activeLoans=openLoans.filter(loan=>!loan.isOverdue),totalCopies=books.reduce((sum,book)=>sum+Number(book.totalQuantity||0),0),availableCopies=books.reduce((sum,book)=>sum+Number(book.availableQuantity||0),0),borrowedCopies=openLoans.reduce((sum,loan)=>sum+appLoanRemaining(loan),0),summary=document.getElementById("appStatSummaryWrap");
+  if(summary){const metrics=[["Đầu sách",books.length,"titles","fa-book-open"],["Tổng số bản",totalCopies,"books","fa-boxes-stacked"],["Bản còn",availableCopies,"available","fa-book"],["Bản đang mượn",borrowedCopies,"borrowed","fa-right-left"],["Người mượn",users.length,"available","fa-users"],["Phiếu đang mượn",new Set(activeLoans.map(loan=>loan.ticketCode)).size,"borrowed","fa-file-lines"],["Phiếu quá hạn",new Set(overdueLoans.map(loan=>loan.ticketCode)).size,"overdue","fa-triangle-exclamation"]];summary.innerHTML=metrics.map(([label,value,color,icon])=>`<article class="dashboard-stat-card"><div class="dashboard-stat-icon ${color}"><i class="fa-solid ${icon}"></i></div><div class="dashboard-stat-info"><strong>${value}</strong><span>${label}</span></div></article>`).join("");}
+  const categories={};books.forEach(book=>{categories[book.category]=(categories[book.category]||0)+Number(book.totalQuantity||0);});const total=Object.values(categories).reduce((sum,value)=>sum+value,0),categoryWrap=document.getElementById("appStatCategoryWrap");
+  if(categoryWrap)categoryWrap.innerHTML=total?Object.entries(categories).map(([name,count])=>{const percent=Math.round(count/total*100);return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:4px"><span>${apiEscapeHTML(name)}</span><span>${count} cuốn (${percent}%)</span></div><div style="height:8px;background:#eee9e0;border-radius:4px;overflow:hidden"><div style="width:${percent}%;height:100%;background:var(--orange)"></div></div></div>`;}).join(""):'<p class="admin-empty">Chưa có dữ liệu sách.</p>';
+  const wrap=document.getElementById("appStatOverdueWrap"),readerMap=new Map(users.map(reader=>[String(reader.id),reader]));
+  if(wrap)wrap.innerHTML=overdueLoans.length?`<table><thead><tr><th>Mã phiếu</th><th>Người mượn</th><th>Sách</th><th>Hạn trả</th><th>Số lượng còn</th></tr></thead><tbody>${overdueLoans.map(loan=>`<tr><td>${apiEscapeHTML(loan.id)}</td><td>${apiEscapeHTML(readerMap.get(String(loan.borrowerId))?.name||loan.borrowerName||"")}</td><td>${apiEscapeHTML(appBookById(loan.bookId)?.title||loan.bookTitle||"")}</td><td>${apiEscapeHTML(loan.dueDate||"")}</td><td>${appLoanRemaining(loan)}</td></tr>`).join("")}</tbody></table>`:'<p class="admin-empty">Không có phiếu quá hạn.</p>';
+  const borrowedByBook=new Map();loans.forEach(loan=>{const id=String(loan.bookId),entry=borrowedByBook.get(id)||{quantity:0,title:appBookById(loan.bookId)?.title||loan.bookTitle||""};entry.quantity+=Number(loan.quantity||0);borrowedByBook.set(id,entry);});const popular=[...borrowedByBook.entries()].filter(([id,row])=>row.title).sort((a,b)=>b[1].quantity-a[1].quantity).slice(0,5),popularWrap=document.getElementById("appStatPopularWrap");
+  if(popularWrap)popularWrap.innerHTML=popular.length?`<table><thead><tr><th>Sách</th><th>Tổng lượt bản mượn</th></tr></thead><tbody>${popular.map(([id,row])=>`<tr><td>${apiEscapeHTML(row.title)}</td><td>${row.quantity}</td></tr>`).join("")}</tbody></table>`:'<p class="admin-empty">Chưa đủ dữ liệu phiếu mượn để xếp hạng.</p>';
+}
+function renderApiStatistics(){renderApiStatisticsBase();renderAdminLoanReports(appLoanRows());}
+function buildAdminLoanReport(loans=appLoanRows()){
+  const yearSelect=document.getElementById("appStatYearFilter"),currentYear=String(new Date().getFullYear()),years=[...new Set([currentYear,...loans.map(loan=>String(loan.borrowDate||"").slice(0,4)).filter(year=>/^\d{4}$/.test(year))])].sort((a,b)=>Number(b)-Number(a));
+  if(yearSelect){const selected=yearSelect.value;yearSelect.innerHTML=years.map(year=>`<option value="${year}">${year}</option>`).join("");yearSelect.value=years.includes(selected)?selected:(years.includes(currentYear)?currentYear:years[0]||currentYear);}
+  const year=yearSelect?.value||currentYear,yearLoans=loans.filter(loan=>String(loan.borrowDate||"").slice(0,4)===year),monthly=Array.from({length:12},(_,index)=>({month:index+1,loans:0,tickets:new Set(),copies:0})),categories=new Map(),popular=new Map();
+  yearLoans.forEach(loan=>{const ticket=String(loan.ticketCode||loan.id),month=Number(String(loan.borrowDate).slice(5,7))-1;if(month>=0&&month<12){monthly[month].tickets.add(ticket);monthly[month].loans=monthly[month].tickets.size;monthly[month].copies+=Number(loan.quantity||1);}const book=appBookById(loan.bookId),category=String(book?.category||"Ch\u01b0a ph\u00e2n lo\u1ea1i"),categoryRow=categories.get(category)||{loans:0,tickets:new Set(),copies:0};categoryRow.tickets.add(ticket);categoryRow.loans=categoryRow.tickets.size;categoryRow.copies+=Number(loan.quantity||1);categories.set(category,categoryRow);const title=book?.title||loan.bookTitle||"S\u00e1ch kh\u00f4ng x\u00e1c \u0111\u1ecbnh",popularRow=popular.get(title)||{loans:0,copies:0};popularRow.loans+=1;popularRow.copies+=Number(loan.quantity||1);popular.set(title,popularRow);});
+  return {year,yearLoans,monthly,categories:[...categories.entries()].sort((a,b)=>b[1].loans-a[1].loans),popular:[...popular.entries()].sort((a,b)=>b[1].copies-a[1].copies)};
+}
+function renderAdminLoanReports(loans){
+  const report=buildAdminLoanReport(loans),monthlyWrap=document.getElementById("appStatMonthlyWrap"),categoryWrap=document.getElementById("appStatCategoryWrap"),popularWrap=document.getElementById("appStatPopularWrap");
+  const ticketCount=new Set(report.yearLoans.map(loan=>loan.ticketCode||loan.id)).size;
+  if(monthlyWrap)monthlyWrap.innerHTML=ticketCount?`<table><thead><tr><th>Th\u00e1ng</th><th>S\u1ed1 phi\u1ebfu m\u01b0\u1ee3n</th><th>S\u1ed1 b\u1ea3n \u0111\u00e3 m\u01b0\u1ee3n</th><th>T\u1ef7 tr\u1ecdng trong n\u0103m</th></tr></thead><tbody>${report.monthly.map(row=>{const percent=Math.round(row.loans/ticketCount*100);return `<tr><td>Th\u00e1ng ${String(row.month).padStart(2,"0")}</td><td>${row.loans}</td><td>${row.copies}</td><td><div class="report-bar-track"><span style="width:${percent}%"></span></div><small>${percent}%</small></td></tr>`;}).join("")}</tbody></table>`:`<p class="admin-empty">N\u0103m ${apiEscapeHTML(report.year)} ch\u01b0a c\u00f3 phi\u1ebfu m\u01b0\u1ee3n \u0111\u1ec3 th\u1ed1ng k\u00ea.</p>`;
+  if(categoryWrap)categoryWrap.innerHTML=report.categories.length?`<table><thead><tr><th>Th\u1ec3 lo\u1ea1i</th><th>S\u1ed1 phi\u1ebfu</th><th>S\u1ed1 b\u1ea3n</th></tr></thead><tbody>${report.categories.map(([name,row])=>`<tr><td>${apiEscapeHTML(name)}</td><td>${row.loans}</td><td>${row.copies}</td></tr>`).join("")}</tbody></table>`:`<p class="admin-empty">Ch\u01b0a c\u00f3 d\u1eef li\u1ec7u m\u01b0\u1ee3n theo th\u1ec3 lo\u1ea1i trong n\u0103m ${apiEscapeHTML(report.year)}.</p>`;
+  if(popularWrap)popularWrap.innerHTML=report.popular.length?`<table><thead><tr><th>S\u00e1ch</th><th>S\u1ed1 phi\u1ebfu</th><th>S\u1ed1 b\u1ea3n</th></tr></thead><tbody>${report.popular.slice(0,5).map(([title,row])=>`<tr><td>${apiEscapeHTML(title)}</td><td>${row.loans}</td><td>${row.copies}</td></tr>`).join("")}</tbody></table>`:'<p class="admin-empty">Ch\u01b0a \u0111\u1ee7 d\u1eef li\u1ec7u \u0111\u1ec3 x\u1ebfp h\u1ea1ng.</p>';
+}
+function exportAdminReportCsv(){
+  const report=buildAdminLoanReport(),rows=[["Nh\u00f3m b\u00e1o c\u00e1o","N\u0103m","Th\u00e1ng/Th\u1ec3 lo\u1ea1i/S\u00e1ch","S\u1ed1 phi\u1ebfu m\u01b0\u1ee3n","S\u1ed1 b\u1ea3n m\u01b0\u1ee3n"]];
+  report.monthly.forEach(item=>rows.push(["Theo th\u00e1ng",report.year,`Th\u00e1ng ${String(item.month).padStart(2,"0")}`,item.loans,item.copies]));
+  report.categories.forEach(([name,item])=>rows.push(["Theo th\u1ec3 lo\u1ea1i",report.year,name,item.loans,item.copies]));
+  report.popular.forEach(([title,item])=>rows.push(["S\u00e1ch m\u01b0\u1ee3n nhi\u1ec1u",report.year,title,item.loans,item.copies]));
+  const csv=rows.map(row=>row.map(value=>{let text=String(value??"");if(/^[\s]*[=+\-@]/.test(text))text=`'${text}`;return `"${text.replace(/"/g,'""')}"`;}).join(",")).join("\r\n"),blob=new Blob(["\uFEFF",csv],{type:"text/csv;charset=utf-8;"}),url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=`bookin-bao-cao-${report.year}.csv`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+async function appReturnLoan(loanId){
+  const key=String(loanId);if(appReturningLoans.has(key))return;
+  const preview=appLoanById(key),previewBook=preview?appBookById(preview.bookId):null;
+  const previewRemaining=preview?appLoanRemaining(preview):0;if(!preview||previewRemaining<=0){showNoticeDialog("Không thể xác nhận trả","Phiếu này không còn bản nào đang được mượn.");return;}
+  const rawQuantity=window.prompt(`Phiếu ${key} còn ${previewRemaining} bản “${previewBook?.title||preview.bookTitle||"sách này"}”. Nhập số bản muốn trả:`,String(previewRemaining));if(rawQuantity===null)return;
+  const returnQuantity=Number(rawQuantity);if(!Number.isSafeInteger(returnQuantity)||returnQuantity<=0||returnQuantity>previewRemaining){showNoticeDialog("Số lượng trả không hợp lệ",`Nhập số nguyên từ 1 đến ${previewRemaining}.`);return;}
+  if(!window.confirm(`Xác nhận nhận lại ${returnQuantity} bản “${previewBook?.title||preview.bookTitle||"sách này"}” từ phiếu ${key}?`))return;
+  appReturningLoans.add(key);let finished=false;setAdminBusyStatus(`Đang ghi nhận trả phiếu ${key}…`);const returnButtons=[...document.querySelectorAll(".admin-action.return")];returnButtons.forEach(button=>{button.disabled=true;button.dataset.returnLabel=button.textContent;button.textContent="Đang xử lý…";});
+  try{
+    const api=window.bookinApi,loan=await api.getBorrowing(key);if(!isOpenBorrowing(loan))throw new Error("Phiếu này đã được trả hoặc không còn ở trạng thái đang mượn.");
+    const [book,borrower]=await Promise.all([api.getBook(loan.bookId),api.getBorrower(loan.borrowerId)]);if(!book||!borrower)throw new Error("Không tìm thấy sách hoặc người mượn được liên kết với phiếu này.");
+    const quantity=Number(loan.quantity),returnedBefore=Number(loan.returnedQuantity||0),remaining=appLoanRemaining(loan),available=Number(book.availableQuantity),total=Number(book.totalQuantity);if(!Number.isSafeInteger(quantity)||quantity<=0||!Number.isSafeInteger(returnedBefore)||returnedBefore<0||returnedBefore>quantity)throw new Error("Số lượng trên phiếu không hợp lệ.");if(returnQuantity>remaining)throw new Error(`Phiếu hiện chỉ còn ${remaining} bản chưa trả. Tải lại danh sách rồi thử lại.`);if(!Number.isSafeInteger(available)||!Number.isSafeInteger(total)||available<0||available>total)throw new Error("Tồn kho hiện tại không hợp lệ; chưa thể ghi nhận trả.");if(available+returnQuantity>total)throw new Error(`Không thể hoàn ${returnQuantity} bản vì kho sẽ vượt tổng số ${total} bản (hiện còn ${available}).`);
+    const nextReturned=returnedBefore+returnQuantity,nextAvailable=available+returnQuantity,returnDate=appTodayISO(),fullyReturned=nextReturned===quantity,nextStatus=fullyReturned?"returned":loan.status;
+    const borrowingUpdate={returnedQuantity:nextReturned,lastReturnDate:returnDate,status:nextStatus,returnDate:fullyReturned?returnDate:null};
+    try{await api.updateBorrowing(loan.id,borrowingUpdate);}catch(error){const latestLoan=await api.getBorrowing(loan.id);if(Number(latestLoan.returnedQuantity||0)!==nextReturned)throw error;}
+    try{const changed=await api.updateBook(book.id,{availableQuantity:nextAvailable,status:nextAvailable>0?"available":"borrowed"});if(Number(changed.availableQuantity)!==nextAvailable)throw new Error("JSON Server không xác nhận số tồn kho mới.");}catch(stockError){
+      let committed=false;try{const latestBook=await api.getBook(book.id);committed=Number(latestBook.availableQuantity)===nextAvailable;}catch(checkError){throw new Error(`Phiếu đã chuyển sang trạng thái đã trả nhưng không xác minh được tồn kho (${checkError.message}). Hãy đối chiếu phiếu ${loan.id} và sách ${book.id}.`);}
+      if(!committed){try{await api.updateBorrowing(loan.id,{status:loan.status,returnDate:loan.returnDate??null,returnedQuantity:returnedBefore,lastReturnDate:loan.lastReturnDate??null});}catch(rollbackError){throw new Error(`Không cập nhật được tồn kho (${stockError.message}) và không thể khôi phục trạng thái phiếu (${rollbackError.message}). Cần đối chiếu phiếu ${loan.id}.`);}throw new Error(`Không cập nhật được tồn kho; phiếu đã được khôi phục về trạng thái trước khi trả: ${stockError.message}`);}
+    }
+    finished=true;await addAdminHistory({action:"Xác nhận trả sách",bookId:book.id,bookTitle:book.title,borrowerId:borrower.id,borrowerName:borrower.name,loanId:loan.id,ticketId:loan.ticketId||loan.id,details:`Phiếu ${loan.ticketId||loan.id}: ${borrower.name} trả ${returnQuantity} bản “${book.title}”; còn ${quantity-nextReturned} bản chưa trả.`});await refreshAdminApiData();showNoticeDialog("Đã ghi nhận trả sách",fullyReturned?`Phiếu ${loan.ticketId||loan.id}: đã trả đủ ${quantity} bản “${book.title}”.`:`Phiếu ${loan.ticketId||loan.id}: đã nhận ${returnQuantity} bản “${book.title}”; còn ${quantity-nextReturned} bản chưa trả.`);
+  }catch(error){try{await refreshAdminApiData();}catch(refreshError){console.error("Không thể làm mới dữ liệu sau lỗi trả sách:",refreshError);}showNoticeDialog(finished?"Đã trả sách, cần làm mới dữ liệu":"Không thể xác nhận trả",finished?`Phiếu đã được cập nhật nhưng không thể làm mới dữ liệu: ${error.message}`:error.message);}
+  finally{appReturningLoans.delete(key);setAdminBusyStatus();returnButtons.forEach(button=>{button.disabled=false;button.textContent=button.dataset.returnLabel||"Xác nhận trả";delete button.dataset.returnLabel;});}
+}
+async function appExtendLoan(loanId){
+  const loan=appLoanById(loanId);if(!loan)return;const due=new Date(loan.dueDate||Date.now());due.setDate(due.getDate()+7);
+  try{await window.bookinApi.updateBorrowing(loan.id,{dueDate:due.toISOString().slice(0,10),status:"active"});await addAdminHistory({action:"Gia hạn phiếu mượn",bookId:loan.bookId,details:`Gia hạn phiếu ${loan.id} thêm 7 ngày.`});await refreshAdminApiData();}
+  catch(error){showNoticeDialog("Không thể gia hạn phiếu",error.message);}
+}
+async function deleteAppBook(bookId){
+  const book=appBookById(bookId),key=`book:${bookId}`;if(!book||appDeletingRecords.has(key))return;const activeLoans=appBorrowings.filter(loan=>String(loan.bookId)===String(book.id)&&isOpenBorrowing(loan));if(activeLoans.length){const copies=activeLoans.reduce((sum,loan)=>sum+appLoanRemaining(loan),0);showNoticeDialog("Không thể xóa sách",`Sách đang có ${activeLoans.length} phiếu mượn chưa hoàn tất (${copies} bản đang được mượn). Hãy xác nhận trả sách trước khi xóa.`);return;}
+  showConfirmDialog({title:"Xóa sách khỏi kho?",message:`Đầu sách “${book.title}” sẽ bị xóa. Thao tác này không thể hoàn tác.`,book,confirmText:"Xóa sách",onConfirm:async()=>{
+    appDeletingRecords.add(key);setAdminBusyStatus(`Đang xóa sách ${book.title}…`);try{await window.bookinApi.deleteBook(book.id);await addAdminHistory({action:"Xóa đầu sách",bookId:book.id,bookTitle:book.title,details:`Đã xóa đầu sách “${book.title}”.`});await refreshAdminApiData();showNoticeDialog("Đã xóa sách",`Đầu sách “${book.title}” đã được xóa khỏi kho.`);}
+    catch(error){try{await refreshAdminApiData();}catch(refreshError){console.error("Không thể làm mới dữ liệu sách:",refreshError);}showNoticeDialog("Không thể xóa sách",`Chưa xóa được “${book.title}”. ${error.message}`);}
+    finally{appDeletingRecords.delete(key);setAdminBusyStatus();}
+  }});
+}
+function openAppBookDialogForEdit(bookId){
+  const book=bookId==null?null:appBookById(bookId),dialog=document.getElementById("appBookDialog"),form=document.getElementById("appBookForm"),category=document.getElementById("appBookCategory");if(!dialog||!form)return;
+  const categories=[...new Set(books.map(item=>item.category).filter(Boolean))],options=document.getElementById("appBookCategoryOptions");if(!categories.length)categories.push("Văn học","Kỹ năng sống","Công nghệ","Khoa học","Lịch sử");if(book?.category&&!categories.includes(book.category))categories.push(book.category);
+  if(options)options.innerHTML=categories.map(name=>`<option value="${apiEscapeHTML(name)}"></option>`).join("");form.reset();form.elements.id.value=book?.id||"";form.elements.title.value=book?.title||"";form.elements.author.value=book?.author||"";form.elements.category.value=book?.category||"";form.elements.totalQuantity.value=book?.totalQuantity??5;form.elements.availableQuantity.value=book?.availableQuantity??5;form.elements.year.value=book?.year||new Date().getFullYear();form.elements.pages.value=book?.pages||300;form.elements.image.value=book?.image||"";setAdminFormFeedback("appBookMessage","");document.getElementById("appBookDialogTitle").textContent=book?"Cập nhật thông tin kho sách":"Nhập đầu sách mới";dialog.showModal();
+}
+function addAppBookCategory(){
+  const input=document.getElementById("appBookCategory"),options=document.getElementById("appBookCategoryOptions"),raw=window.prompt("Nhập tên thể loại mới:");if(raw===null)return;
+  const name=raw.trim();if(!name){setAdminFormFeedback("appBookMessage","Tên thể loại không được để trống.","error");return;}
+  const existing=[...(options?.options||[])].find(option=>option.value.trim().toLocaleLowerCase("vi-VN")===name.toLocaleLowerCase("vi-VN"));
+  if(existing){input.value=existing.value;setAdminFormFeedback("appBookMessage",`Thể loại “${existing.value}” đã có trong danh sách.`,"success");return;}
+  if(options)options.append(new Option(name,name));input.value=name;setAdminFormFeedback("appBookMessage",`Đã thêm “${name}” vào gợi ý. Lưu sách để thể loại xuất hiện trong bộ lọc.`,"success");
+}
+async function initApiAdminApp(){
   let adminSession;
   try { adminSession = JSON.parse(sessionStorage.getItem("bookin-admin-session") || "null"); } catch { sessionStorage.removeItem("bookin-admin-session"); }
   if (!adminSession || adminSession.role !== "admin") {
@@ -1491,6 +1920,95 @@ async function initApiAdminApp() {
       loanMessage.textContent = finished ? `Phiếu ${created?.id || ""} đã được ghi nhưng không thể làm mới màn hình: ${error.message}` : `Không thể hoàn tất phiếu mượn: ${error.message}${cleanupMessage}`;
       if (!finished && created) loanMessage.textContent += ` Mã phiếu cần đối chiếu: ${created.id}.`;
     } finally { appLoanSubmitting = false; saveButton.disabled = false; }
+  window.addEventListener("bookin:api-loading",event=>{document.body.setAttribute("aria-busy",String(Boolean(event.detail?.loading)));document.querySelectorAll(".admin-dialog-save").forEach(button=>button.disabled=Boolean(event.detail?.loading));});
+  document.getElementById("appBookDetailDialog")?.querySelectorAll(".admin-dialog-close,.admin-dialog-cancel").forEach(button=>button.addEventListener("click",()=>document.getElementById("appBookDetailDialog").close()));
+  document.querySelectorAll(".sidebar-nav-item").forEach(item=>item.addEventListener("click",()=>{switchApiAppTab(item.dataset.appTab);document.getElementById("appSidebar")?.classList.remove("is-open");history.replaceState(null,"",`#${item.dataset.appTab}`);}));
+  document.getElementById("mobileSidebarToggle")?.addEventListener("click",()=>document.getElementById("appSidebar")?.classList.toggle("is-open"));
+  document.getElementById("appQuickLoanBtn")?.addEventListener("click",()=>document.getElementById("appNewLoanBtn")?.click());
+  document.getElementById("appAddBookBtn")?.addEventListener("click",()=>openAppBookDialogForEdit(null));
+  document.getElementById("appAddCategoryBtn")?.addEventListener("click",addAppBookCategory);
+  document.getElementById("appBookSearch")?.addEventListener("input",renderApiBooks);
+  document.getElementById("appBookCategoryFilter")?.addEventListener("change",renderApiBooks);
+  document.getElementById("appBookStatusFilter")?.addEventListener("change",renderApiBooks);
+  document.getElementById("appBookSort")
+  ?.addEventListener("change", () => {
+    appBookPage = 1;
+    renderApiBooks();
+  });
+
+
+  document.getElementById("appBookRefreshBtn")
+  ?.addEventListener("click", () => {
+    // Xóa nội dung tìm kiếm
+    const search = document.getElementById("appBookSearch");
+    if (search) search.value = "";
+
+    // Đặt lại bộ lọc thể loại
+    const category = document.getElementById("appBookCategoryFilter");
+    if (category) category.value = "all";
+
+    // Đặt lại bộ lọc trạng thái tồn kho
+    const status = document.getElementById("appBookStatusFilter");
+    if (status) status.value = "all";
+
+    // Đặt lại cách sắp xếp
+    const sort = document.getElementById("appBookSort");
+    if (sort) sort.value = "default";
+
+    // Quay về trang đầu tiên
+    appBookPage = 1;
+
+    // Hiển thị lại danh sách sách ban đầu
+    renderApiBooks();
+  });
+  const bookDialog=document.getElementById("appBookDialog"),bookForm=document.getElementById("appBookForm");
+  bookDialog?.querySelectorAll(".admin-dialog-close,.admin-dialog-cancel").forEach(button=>button.addEventListener("click",()=>bookDialog.close()));
+  bookForm?.addEventListener("submit",async event=>{
+      event.preventDefault();if(appBookSubmitting||!bookForm.reportValidity())return;const id=bookForm.elements.id.value,existing=id?appBookById(id):null,title=bookForm.elements.title.value.trim(),author=bookForm.elements.author.value.trim(),category=bookForm.elements.category.value.trim(),totalQuantity=Number(bookForm.elements.totalQuantity.value),availableQuantity=Number(bookForm.elements.availableQuantity.value);if(!title||!author||!category){setAdminFormFeedback("appBookMessage","Vui lòng nhập tên sách, tác giả và thể loại.","error");return;}if(!Number.isSafeInteger(totalQuantity)||totalQuantity<0||!Number.isSafeInteger(availableQuantity)||availableQuantity<0){setAdminFormFeedback("appBookMessage","Tổng số bản và số bản còn phải là số nguyên không âm.","error");return;}if(availableQuantity>totalQuantity){setAdminFormFeedback("appBookMessage","Số bản còn không thể lớn hơn tổng số bản.","error");return;}const checkedOut=existing?appBorrowings.filter(loan=>String(loan.bookId)===String(existing.id)&&isOpenBorrowing(loan)).reduce((sum,loan)=>sum+appLoanRemaining(loan),0):0;if(totalQuantity-availableQuantity<checkedOut){setAdminFormFeedback("appBookMessage",`Hiện có ${checkedOut} bản đang được mượn. Tổng số bản trừ số bản còn phải lớn hơn hoặc bằng số đó.`,`error`);return;}
+    const payload={title:bookForm.elements.title.value.trim(),author:bookForm.elements.author.value.trim(),category:bookForm.elements.category.value,totalQuantity,availableQuantity,year:Number(bookForm.elements.year.value),pages:Number(bookForm.elements.pages.value),rating:existing?.rating||4.8,publisher:existing?.publisher||"Bookin Publishing",status:availableQuantity>0?"available":"borrowed",image:bookForm.elements.image.value.trim()||existing?.image||"",cover:existing?.cover||"cover-one",description:existing?.description||"Sách thư viện"};
+    const saveButton=bookForm.querySelector('[type="submit"]');appBookSubmitting=true;saveButton.disabled=true;saveButton.dataset.originalLabel=saveButton.dataset.originalLabel||saveButton.textContent;saveButton.textContent="Đang lưu…";setAdminFormFeedback("appBookMessage","Đang lưu sách lên JSON Server…","loading");
+    let savedRecord=null;try{savedRecord=existing?await window.bookinApi.updateBook(existing.id,payload):await window.bookinApi.createBook(payload);await addAdminHistory({action:existing?"Cập nhật đầu sách":"Nhập đầu sách",bookId:savedRecord?.id||existing?.id,bookTitle:payload.title,details:`${payload.title}: ${availableQuantity}/${totalQuantity} cuốn có sẵn.`});bookDialog.close();try{await refreshAdminApiData();showNoticeDialog(existing?"Đã cập nhật sách":"Đã thêm sách",`${payload.title} — ${availableQuantity}/${totalQuantity} bản còn trên kệ.`);}catch(refreshError){showNoticeDialog("Đã lưu, chưa làm mới được danh sách",`${payload.title} đã được lưu lên máy chủ. Không thể tải lại bảng: ${refreshError.message}`);}}
+    catch(error){setAdminFormFeedback("appBookMessage",savedRecord?`Sách đã được lưu nhưng có lỗi khi hoàn tất cập nhật giao diện: ${error.message}`:`Không thể lưu sách. ${error.message}`,savedRecord?"loading":"error");showNoticeDialog(savedRecord?"Đã lưu sách, cần kiểm tra lại": "Không thể lưu sách",savedRecord?`Sách đã được ghi lên máy chủ. Hãy làm mới dữ liệu để kiểm tra. ${error.message}`:error.message);}
+    finally{appBookSubmitting=false;saveButton.disabled=false;saveButton.textContent=saveButton.dataset.originalLabel||"Lưu sách";}
+  });
+  const loanDialog=document.getElementById("appLoanDialog"),loanForm=document.getElementById("appLoanForm"),readerSelect=document.getElementById("appLoanReaderSelect"),bookSelect=document.getElementById("appLoanBookSelect"),loanMessage=document.getElementById("appLoanMessage"),borrowDate=document.getElementById("appLoanBorrowDate"),dueDate=document.getElementById("appLoanDueDate");
+  document.getElementById("appNewLoanBtn")?.addEventListener("click",()=>{loanForm.reset();appLoanCart=[];renderAppLoanCart();readerSelect.disabled=false;borrowDate.readOnly=false;dueDate.readOnly=false;document.getElementById("appLoanDialogTitle").textContent="TẠO PHIẾU MƯỢN";document.getElementById("appLoanSaveBtn").textContent="XÁC NHẬN MƯỢN";if(loanMessage){loanMessage.textContent="";loanMessage.classList.remove("is-error","is-success","is-loading","is-warning");}const due=new Date();due.setDate(due.getDate()+7);borrowDate.value=appTodayISO();dueDate.value=`${due.getFullYear()}-${String(due.getMonth()+1).padStart(2,"0")}-${String(due.getDate()).padStart(2,"0")}`;readerSelect.innerHTML='<option value="">-- Chọn người mượn --</option>'+users.filter(reader=>reader.status!=="inactive").map(reader=>`<option value="${apiEscapeHTML(reader.id)}">${apiEscapeHTML(reader.name)} (${apiEscapeHTML(reader.email||reader.phone||"không có liên hệ")})</option>`).join("");bookSelect.innerHTML='<option value="">-- Chọn sách --</option>'+books.filter(book=>Number(book.availableQuantity)>0).map(book=>`<option value="${apiEscapeHTML(book.id)}">${apiEscapeHTML(book.title)} (còn ${book.availableQuantity}/${book.totalQuantity})</option>`).join("");loanDialog.showModal();});
+  document.getElementById("appNewLoanBtn")?.addEventListener("click",()=>{loanForm.elements.createdByName.readOnly=false;loanForm.elements.createdByName.value=adminName;});
+  document.getElementById("appLoanAddBook")?.addEventListener("click",addAppLoanCartItem);
+  document.getElementById("appLoanCart")?.addEventListener("click",event=>{const button=event.target.closest("[data-remove-loan-book]");if(!button)return;appLoanCart.splice(Number(button.dataset.removeLoanBook),1);renderAppLoanCart();});
+  document.getElementById("appLoanTableWrap")?.addEventListener("click",event=>{const detailButton=event.target.closest("[data-view-ticket]");if(detailButton){viewAppLoanTicket(detailButton.dataset.viewTicket);return;}const button=event.target.closest("[data-ticket-id]");if(button)openAppAddBookToTicket(button.dataset.ticketId,button.dataset.borrowerId);});
+  document.getElementById("appBorrowerDetailContent")?.addEventListener("click",event=>{const button=event.target.closest("[data-view-ticket]");if(button)viewAppLoanTicket(button.dataset.viewTicket);});
+  bookSelect?.addEventListener("change",()=>{const selected=appBookById(bookSelect.value),quantityInput=document.getElementById("appLoanQuantity");quantityInput.max=selected?.availableQuantity??"";if(selected&&Number(quantityInput.value)>Number(selected.availableQuantity))quantityInput.value=selected.availableQuantity;if(loanMessage){loanMessage.classList.toggle("is-warning",Boolean(selected&&Number(selected.availableQuantity)<=2));loanMessage.textContent=selected&&Number(selected.availableQuantity)<=2?`C\u1ea3nh b\u00e1o t\u1ed3n kho th\u1ea5p: ch\u1ec9 c\u00f2n ${Number(selected.availableQuantity)} b\u1ea3n c\u00f3 th\u1ec3 cho m\u01b0\u1ee3n.`:"";}});
+  loanDialog?.querySelectorAll(".admin-dialog-close,.admin-dialog-cancel").forEach(button=>button.addEventListener("click",()=>loanDialog.close()));
+  loanForm?.addEventListener("submit",async event=>{
+    event.preventDefault();if(appLoanSubmitting||!loanForm.reportValidity())return;
+    const borrowerId=readerSelect.value,borrowDateValue=borrowDate.value,dueDateValue=dueDate.value,requestedTicketId=loanForm.elements.ticketId.value,creatorName=loanForm.elements.createdByName.value.trim(),saveButton=loanForm.querySelector('[type="submit"]');
+    if(!borrowerId){setAdminFormFeedback("appLoanMessage","Vui lòng chọn người mượn.","error");return;}
+    if(!creatorName){setAdminFormFeedback("appLoanMessage","Vui lòng nhập tên nhân viên lập phiếu.","error");return;}
+    if(!appLoanCart.length){setAdminFormFeedback("appLoanMessage","Hãy thêm ít nhất một quyển sách vào phiếu.","error");return;}
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(borrowDateValue)||!/^\d{4}-\d{2}-\d{2}$/.test(dueDateValue)||dueDateValue<borrowDateValue){setAdminFormFeedback("appLoanMessage","Ngày mượn hoặc hạn trả không hợp lệ; hạn trả phải từ ngày mượn trở đi.","error");return;}
+    appLoanSubmitting=true;saveButton.disabled=true;setAdminFormFeedback("appLoanMessage","Đang kiểm tra tồn kho và lập phiếu…","loading");
+    const created=[],inventory=[];let finished=false,ticketId="";
+    try{
+      const api=window.bookinApi,reader=await api.getBorrower(borrowerId);if(!reader||String(reader.id)!==String(borrowerId))throw new Error("Không tìm thấy người mượn đã chọn.");
+      const booksToBorrow=await Promise.all(appLoanCart.map(async item=>{const book=await api.getBook(item.bookId);if(!book||String(book.id)!==String(item.bookId))throw new Error(`Không tìm thấy sách “${item.title}”.`);const total=Number(book.totalQuantity),available=Number(book.availableQuantity);if(!Number.isSafeInteger(item.quantity)||item.quantity<=0)throw new Error(`Số lượng của “${item.title}” phải là số nguyên dương.`);if(!Number.isSafeInteger(total)||!Number.isSafeInteger(available)||total<0||available<0||available>total)throw new Error(`Tồn kho của “${item.title}” không hợp lệ.`);if(item.quantity>available)throw new Error(`“${item.title}” chỉ còn ${available} bản; phiếu chưa được tạo.`);return{book,quantity:item.quantity,previousAvailable:available,nextAvailable:available-item.quantity};}));
+      if(new Set(booksToBorrow.map(item=>String(item.book.id))).size!==booksToBorrow.length)throw new Error("Mỗi đầu sách chỉ được thêm một dòng trong phiếu.");
+      const latestLoans=await api.getBorrowings();let ticketCreator={createdById:adminSession.id||adminEmail,createdByName:creatorName,createdByEmail:adminEmail};
+      if(requestedTicketId){const ticketRows=latestLoans.filter(loan=>String(loan.ticketId||loan.id)===String(requestedTicketId));if(!ticketRows.some(isOpenBorrowing)||ticketRows.some(loan=>String(loan.borrowerId)!==String(reader.id)))throw new Error("Phiếu không còn hoạt động hoặc không thuộc người mượn đã chọn.");if(ticketRows.some(loan=>isOpenBorrowing(loan)&&booksToBorrow.some(item=>String(item.book.id)===String(loan.bookId))))throw new Error("Sách này đang có trong phiếu. Hãy chọn một đầu sách khác.");const originalCreator=ticketRows.find(loan=>loan.createdByName);ticketCreator=originalCreator?{createdById:originalCreator.createdById||"",createdByName:originalCreator.createdByName,createdByEmail:originalCreator.createdByEmail||""}:{createdById:"",createdByName:"Chưa ghi nhận",createdByEmail:""};ticketId=requestedTicketId;}else ticketId=nextAppTicketId(latestLoans);
+      for(const item of booksToBorrow){const loan=await api.createBorrowing({ticketId,borrowerId:reader.id,bookId:item.book.id,borrowerName:reader.name,bookTitle:item.book.title,quantity:item.quantity,borrowDate:borrowDateValue,dueDate:dueDateValue,returnDate:null,status:"active",...ticketCreator});created.push(loan);}
+      for(const item of booksToBorrow){inventory.push(item);const changed=await api.updateBook(item.book.id,{availableQuantity:item.nextAvailable,status:item.nextAvailable>0?"available":"borrowed"});if(Number(changed.availableQuantity)!==item.nextAvailable)throw new Error(`JSON Server chưa xác nhận tồn kho mới của “${item.book.title}”.`);}
+      finished=true;const descriptions=booksToBorrow.map(item=>`${item.book.title} × ${item.quantity}`).join(", ");
+      await addAdminHistory({action:requestedTicketId?"Bổ sung sách vào phiếu":"Tạo phiếu mượn",ticketId,borrowerId:reader.id,borrowerName:reader.name,bookTitle:booksToBorrow.map(item=>item.book.title).join(", "),loanId:created[0]?.id,createdByName:ticketCreator.createdByName,createdById:ticketCreator.createdById,details:`Phiếu ${ticketId}: ${requestedTicketId?"bổ sung":"mượn"} ${descriptions}; nhân viên lập phiếu: ${ticketCreator.createdByName}; hạn trả ${dueDateValue}.`});
+      loanDialog.close();appLoanCart=[];await refreshAdminApiData();showNoticeDialog(requestedTicketId?"Đã bổ sung sách vào phiếu":"Đã tạo phiếu mượn",`Phiếu ${ticketId} của ${reader.name}: ${descriptions}. Nhân viên lập phiếu: ${ticketCreator.createdByName}.`);
+    }catch(error){
+      let cleanupMessage="";
+      if(!finished){const failedBookIds=new Set();for(const loan of created.slice().reverse()){try{await window.bookinApi.deleteBorrowing(loan.id);}catch(cleanupError){failedBookIds.add(String(loan.bookId));cleanupMessage+=` Không xóa được dòng phiếu ${loan.id}: ${cleanupError.message}.`;}}
+        for(const item of inventory.slice().reverse()){if(failedBookIds.has(String(item.book.id))){cleanupMessage+=` Tồn kho “${item.book.title}” cần giữ nguyên và đối chiếu cùng dòng phiếu còn lại.`;continue;}try{const latest=await window.bookinApi.getBook(item.book.id);if(Number(latest.availableQuantity)===item.nextAvailable)await window.bookinApi.updateBook(item.book.id,{availableQuantity:item.previousAvailable,status:item.previousAvailable>0?"available":"borrowed"});else cleanupMessage+=` Tồn kho “${item.book.title}” đã thay đổi và cần đối chiếu.`;}catch(rollbackError){cleanupMessage+=` Không hoàn tác tồn kho “${item.book.title}”: ${rollbackError.message}.`;}}
+      }
+      try{await refreshAdminApiData();}catch(refreshError){console.error("Không thể làm mới dữ liệu sau lỗi lập phiếu:",refreshError);}
+      if(finished){if(loanDialog.open)loanDialog.close();showNoticeDialog(requestedTicketId?"Đã bổ sung sách vào phiếu":"Phiếu đã được lưu",`Phiếu ${ticketId} đã được ghi vào JSON Server nhưng danh sách chưa làm mới được. Hãy tải lại dữ liệu để kiểm tra.`);return;}
+      setAdminFormFeedback("appLoanMessage",`Không thể hoàn tất phiếu ${ticketId||"mượn"}: ${error.message}${cleanupMessage}`,"error");
+    }finally{appLoanSubmitting=false;saveButton.disabled=false;}
   });
   const borrowerDialog = document.getElementById("appBorrowerDialog"), borrowerForm = document.getElementById("appBorrowerForm");
   document.getElementById("appAddBorrowerBtn")?.addEventListener("click", () => openAppBorrowerDialog()); borrowerDialog?.querySelectorAll(".admin-dialog-close,.admin-dialog-cancel").forEach(button => button.addEventListener("click", () => borrowerDialog.close()));
